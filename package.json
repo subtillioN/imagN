@@ -1,0 +1,39 @@
+{
+  "name": "imagn",
+  "version": "0.1.0",
+  "description": "A Functional-Reactive AI Image/Video Generation Interface",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "jest",
+    "lint": "eslint src --ext js,jsx",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@cycle/dom": "^23.1.0",
+    "@cycle/run": "^5.7.0",
+    "@cycle/state": "^1.5.0",
+    "callbag-basics": "^4.0.0",
+    "callbag-from-obs": "^1.0.0",
+    "callbag-to-obs": "^1.0.0",
+    "xstream": "^11.14.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
+    "@vitejs/plugin-react": "^4.1.0",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.3",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
