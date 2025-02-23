@@ -1,5 +1,5 @@
 import { svg } from '@cycle/dom';
-import xs from 'xstream';
+import { pipe, merge, map } from 'callbag-basics';
 import { BaseComponent } from '../BaseComponent';
 
 export class NodeConnection extends BaseComponent {
@@ -45,7 +45,7 @@ export class NodeConnection extends BaseComponent {
       .events('mouseup')
       .map(() => ({ type: 'CONNECTION_CANCEL' }));
 
-    return xs.merge(
+    return merge(
       connectionStart$,
       connectionMove$,
       connectionEnd$,
@@ -59,7 +59,7 @@ export class NodeConnection extends BaseComponent {
       connections: []
     };
 
-    return action$.fold((state, action) => {
+    return pipe(action$, map((state, action) => {
       switch (action.type) {
         case 'CONNECTION_START':
           return {

@@ -4,7 +4,7 @@
 
 ### Core Technologies
 - **Cycle.js** - Main framework for functional-reactive programming
-- **Callbags** - Lightweight reactive streams implementation
+- **Callbags** - Lightweight reactive streams implementation (used instead of RxJS)
 - **JavaScript (ES6+)** - Modern JavaScript features for clean, maintainable code
 
 ### AI Integration

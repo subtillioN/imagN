@@ -1,10 +1,12 @@
-import { div } from '@cycle/dom';
-import xs from 'xstream';
+import { div, button } from '@cycle/dom';
+import { pipe, merge, map } from 'callbag-basics';
 import { BaseComponent } from '../BaseComponent';
+import { WorkflowStorageService } from '../../services/workflowStorage';
 
 export class NodeEditor extends BaseComponent {
   constructor(sources) {
     super(sources);
+    this.workflowStorage = new WorkflowStorageService();
     this.state$ = this.model(this.intent(sources));
   }
 
@@ -34,7 +36,15 @@ export class NodeEditor extends BaseComponent {
       .events('mouseup')
       .map(() => ({ type: 'NODE_DRAG_END' }));
 
-    return xs.merge(dragStart$, dragMove$, dragEnd$);
+    const saveWorkflow$ = sources.DOM.select('.save-workflow')
+      .events('click')
+      .map(() => ({ type: 'SAVE_WORKFLOW' }));
+
+    const loadWorkflow$ = sources.DOM.select('.load-workflow')
+      .events('click')
+      .map(() => ({ type: 'LOAD_WORKFLOW' }));
+
+    return merge(dragStart$, dragMove$, dragEnd$, saveWorkflow$, loadWorkflow$);
   }
 
   model(action$) {
@@ -45,7 +55,7 @@ export class NodeEditor extends BaseComponent {
       offset: { x: 0, y: 0 }
     };
 
-    return action$.fold((state, action) => {
+    return pipe(action$, map((state, action) => {
       switch (action.type) {
         case 'NODE_DRAG_START':
           return {
@@ -84,6 +94,25 @@ export class NodeEditor extends BaseComponent {
             draggingNode: null
           };
 
+        case 'SAVE_WORKFLOW':
+          this.workflowStorage.saveWorkflow(state).subscribe(
+            () => console.log('Workflow saved successfully'),
+            error => console.error('Error saving workflow:', error)
+          );
+          return state;
+
+        case 'LOAD_WORKFLOW':
+          this.workflowStorage.getAllWorkflows().forEach(workflow => {
+            if (workflow.nodes && workflow.connections) {
+              return {
+                ...state,
+                nodes: workflow.nodes,
+                connections: workflow.connections
+              };
+            }
+          });
+          return state;
+
         default:
           return state;
       }
@@ -93,6 +122,10 @@ export class NodeEditor extends BaseComponent {
   view(state$) {
     return state$.map(state =>
       div('.node-editor', [
+        div('.toolbar', [
+          button('.save-workflow', 'Save Workflow'),
+          button('.load-workflow', 'Load Workflow')
+        ]),
         div('.node-canvas', [
           ...state.nodes.map(node =>
             div('.node', {

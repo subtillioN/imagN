@@ -20,6 +20,7 @@
 
 ### 2. Functional Reactive Programming
 - Use Cycle.js for implementing MVI pattern
+- Use callbags exclusively for reactive streams (no RxJS)
 - Maintain pure functions throughout
 - Handle side effects only through drivers
 - Keep state management in streams

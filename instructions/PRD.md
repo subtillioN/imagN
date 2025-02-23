@@ -37,7 +37,42 @@ ImagN is a functional-reactive AI image and video generation interface that prov
 - Custom node creation
 - Node preset management
 
-### 4. AI Model Management
+### 4. Built-in Workflow Presets
+#### Image Presets
+- High-Quality Image Upscaling
+  - Multi-stage upscaling with detail enhancement
+  - Artifact reduction and sharpness optimization
+- Style Transfer Suite
+  - Artistic style transfer (various artists and periods)
+  - Photo-realistic style adaptation
+- Portrait Enhancement
+  - Facial feature refinement
+  - Lighting and skin tone optimization
+- Background Generation
+  - Seamless texture creation
+  - Environment expansion
+- Batch Processing
+  - Multi-image style application
+  - Bulk enhancement and conversion
+
+#### Video Presets
+- Frame Interpolation
+  - Smooth motion enhancement
+  - FPS conversion and optimization
+- Style Consistency
+  - Temporal style transfer
+  - Consistent look across frames
+- Video Enhancement
+  - Resolution upscaling
+  - Color grading and stabilization
+- Special Effects
+  - Transition templates
+  - Dynamic visual effects
+- Scene Generation
+  - Background animation
+  - Particle systems
+
+### 5. AI Model Management
 - Model switching capability
 - Custom model integration
 - Model performance monitoring
