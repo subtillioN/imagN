@@ -1,0 +1,84 @@
+.node-editor {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+}
+
+.node-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-origin: 0 0;
+}
+
+.node {
+  position: absolute;
+  min-width: 200px;
+  background: var(--bg-node);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  user-select: none;
+  cursor: move;
+}
+
+.node-header {
+  padding: 8px 12px;
+  background: var(--bg-node-header);
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.node-content {
+  padding: 12px;
+  display: flex;
+  gap: 16px;
+}
+
+.node-inputs,
+.node-outputs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.node-input,
+.node-output {
+  position: relative;
+  padding: 4px 8px;
+  background: var(--bg-input);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+
+.node-input::before,
+.node-output::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateY(-50%);
+}
+
+.node-input::before {
+  left: -6px;
+}
+
+.node-output::after {
+  right: -6px;
+}
+
+.connection {
+  position: absolute;
+  pointer-events: none;
+  stroke: var(--accent);
+  stroke-width: 2px;
+  fill: none;
+}

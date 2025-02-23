@@ -1,6 +1,8 @@
 import { pipe } from 'callbag-pipe';
 import { map } from 'callbag-map';
 import { filter } from 'callbag-filter';
+import { merge } from 'callbag-merge';
+import { share } from 'callbag-share';
 import { ActionTypes } from './model';
 
 // Helper to create action
@@ -10,6 +12,9 @@ const createAction = (type, payload) => ({ type, payload });
 export const createIntent = (sources) => {
   const click$ = sources.DOM.select('.button').events('click');
   const input$ = sources.DOM.select('.input').events('input');
+  const hover$ = sources.DOM.select('.interactive').events('mouseenter');
+  const upload$ = sources.DOM.select('.file-input').events('change');
+  const params$ = sources.DOM.select('.parameter').events('change');
 
   // Transform DOM events into actions
   const actions$ = pipe(
@@ -28,6 +33,27 @@ export const createIntent = (sources) => {
     })
   );
 
+  const hoverActions$ = pipe(
+    hover$,
+    map(event => createAction(ActionTypes.SET_HOVER, event.target.dataset))
+  );
+
+  const uploadActions$ = pipe(
+    upload$,
+    map(event => {
+      const file = event.target.files[0];
+      return createAction(ActionTypes.SET_UPLOAD, file);
+    })
+  );
+
+  const paramActions$ = pipe(
+    params$,
+    map(event => createAction(ActionTypes.SET_PARAMS, {
+      name: event.target.name,
+      value: event.target.value
+    }))
+  );
+
   // Error handling stream
   const error$ = pipe(
     sources.HTTP.select('query').response$,
@@ -38,6 +64,9 @@ export const createIntent = (sources) => {
   return {
     actions$,
     inputActions$,
+    hoverActions$,
+    uploadActions$,
+    paramActions$,
     error$
   };
 };

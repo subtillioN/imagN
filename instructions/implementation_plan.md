@@ -44,9 +44,22 @@
 
 ### 3.2 Core Components
 - Develop base UI components
+- Implement tabbed interface for image/video workspaces
+- Build node-based workflow editor
+  - Canvas-based node editor component
+  - Node connection visualization system
+  - Workflow serialization and loading
+  - Node preset management
+  - Mini-map for large workflows
 - Implement image generation interface
+  - Real-time preview capabilities
+  - Parameter controls integration
+  - Node-based image pipeline
 - Create video generation workflow
-- Build workflow editor
+  - Frame sequence management
+  - Transition effects system
+  - Node-based video pipeline
+  - Progress tracking integration
 
 ### 3.3 Real-time Features
 - Implement WebSocket integration
