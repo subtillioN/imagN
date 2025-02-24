@@ -2,14 +2,21 @@
 
 ## Core Principles
 
-### 1. Model-View-Intent (MVI) Architecture
+### 1. Component-Based Architecture with Material-UI
+- **Material Design**: Follow Google's Material Design guidelines
+- **MUI Components**: Use Material-UI components for UI elements
+- **Theme Customization**: Use the theme system for consistent styling
+- **Responsive Design**: Implement responsive layouts using MUI Grid system
+- **Accessibility**: Ensure all components meet accessibility standards
+
+### 2. Model-View-Intent (MVI) Architecture
 - **Model**: Pure state management through streams
   - Single source of truth
   - Immutable state updates
   - State history management
 
-- **View**: Pure render functions
-  - Declarative UI components
+- **View**: Pure render functions with Material-UI
+  - Declarative UI components using MUI
   - State-driven rendering
   - Composable view logic
 
@@ -18,24 +25,86 @@
   - Side effect management through drivers
   - Pure action-to-state transformations
 
-### 2. Functional Reactive Programming
+### 3. Functional Reactive Programming
 - Use Cycle.js for implementing MVI pattern
 - Use callbags exclusively for reactive streams (no RxJS)
 - Maintain pure functions throughout
 - Handle side effects only through drivers
 - Keep state management in streams
 
-### 2. JavaScript Best Practices
-- Use ES6+ features
+### 4. Material-UI Best Practices
+- Use MUI theme system for consistent styling
+- Leverage CSS-in-JS with Emotion
+- Use the sx prop for component-specific styling
+- Extend theme for custom components
+- Maintain consistent spacing using theme.spacing
+- Implement dark theme with appropriate contrast
+
+### 5. JavaScript/TypeScript Best Practices
+- Use TypeScript for type safety
+- ES6+ features for clean code
 - JSDoc for documentation
 - Consistent naming conventions
 - Proper error handling
 
-### 3. Component Architecture
-- Single responsibility principle
-- Input/Output stream interfaces
-- Isolated state management
-- Composable design
+## Component Architecture
+
+### 1. Material-UI Component Structure
+```jsx
+// Example of a properly structured MUI component
+function CustomCard({ title, content, actions }) {
+  return (
+    <Card sx={{ maxWidth: 345, mb: 2 }}>
+      <CardHeader title={title} />
+      <CardContent>
+        <Typography variant="body2">{content}</Typography>
+      </CardContent>
+      <CardActions>
+        {actions}
+      </CardActions>
+    </Card>
+  );
+}
+```
+
+### 2. Theme Usage
+```jsx
+// Accessing theme in components
+import { useTheme } from '@mui/material/styles';
+
+function ThemedComponent() {
+  const theme = useTheme();
+  
+  return (
+    <Box 
+      sx={{ 
+        bgcolor: theme.palette.background.paper,
+        color: theme.palette.text.primary,
+        p: theme.spacing(2),
+        borderRadius: theme.shape.borderRadius
+      }}
+    >
+      Content
+    </Box>
+  );
+}
+```
+
+### 3. Responsive Design
+```jsx
+// Grid system for responsive layouts
+<Grid container spacing={2}>
+  <Grid item xs={12} md={6} lg={4}>
+    <ComponentA />
+  </Grid>
+  <Grid item xs={12} md={6} lg={4}>
+    <ComponentB />
+  </Grid>
+  <Grid item xs={12} md={6} lg={4}>
+    <ComponentC />
+  </Grid>
+</Grid>
+```
 
 ## Code Organization
 
@@ -46,164 +115,160 @@ src/
     common/       # Shared components
     image/        # Image generation components
     video/        # Video generation components
+    DevTools/     # Developer tools components
   drivers/        # Cycle.js drivers
   streams/        # Stream utilities
   types/          # TypeScript definitions
   utils/          # Pure utility functions
   constants/      # Application constants
+  theme/          # Material-UI theme configuration
   styles/         # Global styles
 ```
 
 ### 2. File Naming
-- Component files: PascalCase.js
-- Stream files: camelCase.stream.js
-- Driver files: camelCase.driver.js
-- Test files: *.test.js
+- Component files: PascalCase.tsx
+- Stream files: camelCase.stream.ts
+- Driver files: camelCase.driver.ts
+- Test files: *.test.tsx
+- Theme files: camelCase.theme.ts
 
-## Coding Standards
+## Styling Guidelines
 
-### 1. Stream Naming
-```javascript
-// Stream names end with $
-const click$ = xs.fromEvent(button, 'click')
-const state$ = xs.of(initialState)
-
-// Operator names are descriptive
-const filteredClick$ = click$.filter(isValid)
-const mappedState$ = state$.map(transform)
+### 1. Theme-Based Styling
+```jsx
+// Use theme-based styling for consistency
+<Button 
+  variant="contained" 
+  color="primary"
+  sx={{
+    mt: 2,
+    mb: 2,
+    borderRadius: 1
+  }}
+>
+  Submit
+</Button>
 ```
 
-### 2. Component Structure (MVI Pattern)
-```javascript
-function MyComponent(sources) {
-  // Intent (User Actions)
-  const intent = {
-    input$: sources.DOM.select('.input').events('input'),
-    submit$: sources.DOM.select('.submit').events('click')
-  }
-  
-  // Model (State Management)
-  const model = {
-    state$: intent.input$.map(processInput)
-      .map(updateState)
-      .startWith(initialState)
-  }
-  
-  // View (Pure Render)
-  const view = {
-    vdom$: model.state$.map(state => renderView(state))
-  }
-  
-  return {
-    DOM: view.vdom$,
-    HTTP: model.state$.map(createRequest)
-  }
-}
+### 2. Responsive Styling
+```jsx
+// Responsive styling with breakpoints
+<Box
+  sx={{
+    width: '100%',
+    p: 2,
+    [theme.breakpoints.up('md')]: {
+      width: '75%',
+      p: 3,
+    },
+    [theme.breakpoints.up('lg')]: {
+      width: '50%',
+      p: 4,
+    },
+  }}
+>
+  Content
+</Box>
 ```
 
-### 3. Error Handling
-```javascript
-// Stream error handling
-const safe$ = stream$.catch(handleError)
+### 3. Custom Component Styling
+```jsx
+// Creating styled components
+import { styled } from '@mui/material/styles';
 
-// Proper error propagation
-const errorState$ = stream$.map(processWithError)
+const CustomBox = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[1],
+  '&:hover': {
+    boxShadow: theme.shadows[3],
+  },
+}));
 ```
 
-## Testing Guidelines
+## Stream Integration with React Components
 
-### 1. Unit Tests
-- Test pure functions thoroughly
-- Use marble testing for streams
-- Mock external dependencies
-- Test error cases
-
-### 2. Component Tests
-```javascript
-describe('Component', () => {
-  it('should handle input streams', () => {
-    // Setup test streams
-    const input$ = xs.of(testData)
+### 1. Component with Stream Integration
+```jsx
+function StreamComponent(props) {
+  // Use React state for UI
+  const [data, setData] = React.useState(initialState);
+  
+  // Setup streams for data flow
+  React.useEffect(() => {
+    const subscription = stream$.subscribe({
+      next: newData => setData(newData)
+    });
     
-    // Assert output streams
-    const output$ = component(input$)
-    // Verify results
-  })
-})
+    return () => subscription.unsubscribe();
+  }, []);
+  
+  // Render with Material-UI
+  return (
+    <Card>
+      <CardContent>
+        <Typography variant="h5">{data.title}</Typography>
+        <Typography variant="body2">{data.content}</Typography>
+      </CardContent>
+    </Card>
+  );
+}
 ```
 
 ## Performance Guidelines
 
-### 1. Stream Optimization
+### 1. MUI Component Optimization
+- Use React.memo for pure components
+- Avoid inline style objects
+- Use proper keys for lists
+- Implement virtualization for long lists with `react-window`
+- Use `Box` component instead of divs for theme integration
+
+### 2. Stream Optimization
 - Use appropriate operators
 - Implement proper cleanup
 - Handle memory management
 - Optimize re-renders
 
-### 2. Resource Management
-```typescript
-// Proper resource cleanup
-const subscription = stream$.subscribe({
-  next: handleNext,
-  error: handleError,
-  complete: cleanup
-})
+## Accessibility
 
-// Dispose when done
-subscription.unsubscribe()
+### 1. Material-UI Accessibility
+```jsx
+// Proper accessibility with Material-UI
+<Button
+  aria-label="Add new item"
+  startIcon={<AddIcon />}
+>
+  Add Item
+</Button>
+
+<IconButton
+  aria-label="Developer Tools"
+  tooltip="Developer Tools - Task & Feature Analysis"
+>
+  <SettingsIcon />
+</IconButton>
 ```
 
-## Documentation
-
-### 1. Code Comments
-```javascript
-// Document complex stream operations
-const processed$ = input$.pipe(
-  // Transform input to required format
-  map(transform),
-  // Filter invalid states
-  filter(isValid),
-  // Combine with latest state
-  withLatestFrom(state$)
-)
-```
-
-### 2. Component Documentation
-```javascript
-/**
- * @description Handles image generation process
- * @param {Object} sources - Component sources
- * @returns {Object} Component sinks
- */
-function ImageGenerator(sources) {
-  // Implementation
-}
-```
+### 2. Color Contrast
+- Ensure sufficient contrast in the theme
+- Use accessible color combinations
+- Test with assistive technologies
 
 ## Development Workflow
 
-### 1. Version Control
-- Feature branches
-- Meaningful commits
-- PR reviews
-- Clean history
+### 1. Component Development Process
+1. Define component requirements
+2. Create TypeScript interfaces
+3. Implement component using Material-UI
+4. Add stream integration (if needed)
+5. Write tests
+6. Document component usage
 
-### 2. Development Process
-- Local development setup
-- Testing workflow
-- Code review guidelines
-- Deployment process
-
-## Best Practices
-
-### 1. Stream Management
-- Keep streams simple
-- Proper error handling
-- Memory management
-- Performance optimization
-
-### 2. Component Design
-- Single responsibility
-- Pure functions
-- Proper typing
-- Clear documentation
+### 2. Best Practices
+- Keep components focused and reusable
+- Maintain consistent styling with theme
+- Document component props with JSDoc
+- Include examples in documentation
+- Test edge cases and accessibility

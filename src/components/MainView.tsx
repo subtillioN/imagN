@@ -1,5 +1,24 @@
 import React, { Component } from 'react';
-import styles from '../styles/base.module.css';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+  Container,
+  Tab,
+  Tabs,
+  Button,
+  Grid,
+  Paper,
+  Card,
+  CardHeader,
+  CardContent,
+  IconButton
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Collections as CollectionsIcon
+} from '@mui/icons-material';
 import { DevToolsButton } from './DevTools/DevToolsButton';
 
 interface MainViewProps {
@@ -16,6 +35,7 @@ interface MainViewState {
   imageConfig: any;
   progress: any;
   results: any;
+  currentTab: number;
 }
 
 export class MainView extends Component<MainViewProps, MainViewState> {
@@ -28,9 +48,13 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     this.state = {
       imageConfig: {},
       progress: {},
-      results: {}
+      results: {},
+      currentTab: 0
     };
     this.initializeStreams();
+
+    // Bind methods
+    this.handleTabChange = this.handleTabChange.bind(this);
   }
 
   initializeStreams() {
@@ -63,228 +87,183 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     this.initializeStreams();
   }
 
-  renderHeader(state: MainViewState) {
-    const headerStyle = {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-      padding: '1rem',
-      backgroundColor: '#080a0e',
-      borderBottom: '1px solid #101530',
-      color: '#f8fafc'
-    };
+  handleTabChange(event: React.SyntheticEvent, newValue: number) {
+    this.setState({ currentTab: newValue });
+  }
 
-    const logoNavStyle = {
-      display: 'flex',
-      alignItems: 'center'
-    };
-
-    const logoStyle = {
-      fontSize: '1.25rem',
-      fontWeight: 'bold',
-      color: '#f8fafc'
-    };
-
-    const navStyle = {
-      marginLeft: '1rem'
-    };
-
-    const navListStyle = {
-      listStyle: 'none',
-      padding: 0,
-      margin: 0,
-      display: 'flex',
-      gap: '1rem'
-    };
-
-    const navItemStyle = {
-      color: '#f8fafc',
-      padding: '0.5rem 1rem',
-      borderRadius: '0.375rem',
-      cursor: 'pointer'
-    };
-
-    const activeNavItemStyle = {
-      ...navItemStyle,
-      backgroundColor: '#0c0e14'
-    };
-
-    const controlsStyle = {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '1rem'
-    };
-
-    const buttonStyle = {
-      padding: '0.5rem 1rem',
-      borderRadius: '0.375rem',
-      fontWeight: 500,
-      cursor: 'pointer',
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      color: '#f8fafc',
-      border: 'none'
-    };
-
-    const primaryButtonStyle = {
-      ...buttonStyle,
-      backgroundColor: '#0c0e14'
-    };
-
+  renderHeader() {
     return (
-      <header style={headerStyle}>
-        <div style={logoNavStyle}>
-          <div style={logoStyle}>ImagN</div>
-          <nav style={navStyle}>
-            <ul style={navListStyle}>
-              <li role="listitem" aria-label="Image Workspace" style={activeNavItemStyle}>Image Workspace</li>
-              <li role="listitem" aria-label="Video Workspace" style={navItemStyle}>Video Workspace</li>
-              <li role="listitem" aria-label="Node Editor" style={navItemStyle}>Node Editor</li>
-              <li role="listitem" aria-label="Presets" style={navItemStyle}>Presets</li>
-            </ul>
-          </nav>
-        </div>
-        <div style={controlsStyle}>
-          <div style={primaryButtonStyle}>New Project</div>
-          <div style={buttonStyle}>Gallery</div>
-        </div>
-      </header>
+      <AppBar position="static" color="transparent" elevation={0}>
+        <Toolbar>
+          <Typography variant="h5" component="div" sx={{ flexGrow: 0, fontWeight: 'bold', mr: 4 }}>
+            ImagN
+          </Typography>
+          
+          <Tabs 
+            value={this.state.currentTab} 
+            onChange={this.handleTabChange} 
+            sx={{ flexGrow: 1 }}
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab label="Image Workspace" />
+            <Tab label="Video Workspace" />
+            <Tab label="Node Editor" />
+            <Tab label="Presets" />
+          </Tabs>
+          
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              startIcon={<AddIcon />}
+            >
+              New Project
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              startIcon={<CollectionsIcon />}
+            >
+              Gallery
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
     );
   }
 
-  renderContent(state: MainViewState) {
-    const contentStyle = {
-      padding: '1.5rem 0',
-      backgroundColor: '#050608',
-      minHeight: 'calc(100vh - 80px)'
-    };
-
-    const containerStyle = {
-      maxWidth: '1280px',
-      margin: '0 auto',
-      padding: '0 1rem'
-    };
-
-    const workspaceStyle = {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '1.5rem',
-      backgroundColor: '#050608',
-    };
-
-    const panelStyle = {
-      backgroundColor: 'rgba(255, 255, 255, 0.01)',
-      borderRadius: '0.5rem',
-      border: '1px solid #101530',
-      overflow: 'hidden'
-    };
-
-    const panelHeaderStyle = {
-      padding: '1rem',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      color: '#f8fafc',
-      fontWeight: 500,
-      borderBottom: '1px solid #101530'
-    };
-
-    const panelContentStyle = {
-      padding: '1rem',
-      color: '#f8fafc',
-      height: 'calc(100% - 60px)',
-      overflow: 'auto'
-    };
-
+  renderContent() {
     return (
-      <main style={contentStyle}>
-        <div style={containerStyle}>
-          <div style={workspaceStyle}>
-            {this.renderProgress(state)}
-            <div style={panelStyle}>
-              <div style={panelHeaderStyle}>Node Editor</div>
-              <div style={panelContentStyle}>Node canvas will be implemented here</div>
-            </div>
-            <div style={panelStyle}>
-              <div style={panelHeaderStyle}>Preview</div>
-              <div style={panelContentStyle}>Preview content will be displayed here</div>
-            </div>
-            <div style={panelStyle}>
-              <div style={panelHeaderStyle}>Properties</div>
-              <div style={panelContentStyle}>Node properties will be shown here</div>
-            </div>
-          </div>
-        </div>
-      </main>
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        <Grid container spacing={3}>
+          {/* Progress Panel */}
+          {this.state.progress && this.state.progress.status && (
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="h6">Progress</Typography>
+                <Typography>{this.state.progress.status}</Typography>
+              </Paper>
+            </Grid>
+          )}
+          
+          {/* Node Editor Panel */}
+          <Grid item xs={12} md={6} lg={4}>
+            <Card sx={{ height: '100%' }}>
+              <CardHeader 
+                title="Node Editor" 
+                sx={{ 
+                  bgcolor: 'background.paper', 
+                  borderBottom: 1, 
+                  borderColor: 'divider' 
+                }}
+              />
+              <CardContent sx={{ height: 400 }}>
+                <Typography>Node canvas will be implemented here</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Preview Panel */}
+          <Grid item xs={12} md={6} lg={4}>
+            <Card sx={{ height: '100%' }}>
+              <CardHeader 
+                title="Preview" 
+                sx={{ 
+                  bgcolor: 'background.paper', 
+                  borderBottom: 1, 
+                  borderColor: 'divider' 
+                }}
+              />
+              <CardContent sx={{ height: 400 }}>
+                <Typography>Preview content will be displayed here</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Properties Panel */}
+          <Grid item xs={12} md={6} lg={4}>
+            <Card sx={{ height: '100%' }}>
+              <CardHeader 
+                title="Properties" 
+                sx={{ 
+                  bgcolor: 'background.paper', 
+                  borderBottom: 1, 
+                  borderColor: 'divider' 
+                }}
+              />
+              <CardContent sx={{ height: 400 }}>
+                <Typography>Node properties will be shown here</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Results Section */}
+          {this.state.results && this.state.results.images && (
+            <Grid item xs={12}>
+              <Card>
+                <CardHeader title="Results" />
+                <CardContent>
+                  <Grid container spacing={2}>
+                    {this.state.results.images.map((image: any, index: number) => (
+                      <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
+                        <img 
+                          src={image.url} 
+                          alt={`Generated ${index + 1}`} 
+                          style={{ width: '100%', borderRadius: 8 }}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+        </Grid>
+      </Container>
     );
   }
 
-  renderImageConfig(state: MainViewState) {
+  renderFooter() {
     return (
-      <div className={styles['image-config']}>
-        {/* Image generation configuration UI will be implemented here */}
-      </div>
-    );
-  }
-
-  renderProgress(state: MainViewState) {
-    const { progress } = state;
-    return (
-      <div className={styles['progress-section']}>
-        {progress && progress.status && (
-          <div className={styles['progress-status']} role="status" aria-live="polite">{progress.status}</div>
-        )}
-      </div>
-    );
-  }
-
-  renderResults(state: MainViewState) {
-    const { results } = state;
-    return (
-      <div className={styles['results-section']}>
-        {results.images && results.images.map((image: any, index: number) => (
-          <div key={index} className={styles['result-image']}>
-            <img src={image.url} alt={`Generated ${index + 1}`} />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  renderFooter(state: MainViewState) {
-    const footerStyle = {
-      backgroundColor: '#080a0e',
-      color: '#f8fafc',
-      padding: '1rem',
-      borderTop: '1px solid #101530'
-    };
-
-    const footerContentStyle = {
-      textAlign: 'center' as 'center'
-    };
-
-    return (
-      <footer style={footerStyle}>
-        <div style={footerContentStyle}>
-          <p>© 2023 ImagN. All rights reserved.</p>
-        </div>
-      </footer>
+      <Box 
+        component="footer" 
+        sx={{ 
+          py: 3, 
+          px: 2, 
+          mt: 'auto',
+          backgroundColor: (theme) => theme.palette.background.paper,
+          borderTop: 1,
+          borderColor: 'divider'
+        }}
+      >
+        <Container maxWidth="sm">
+          <Typography variant="body2" color="text.secondary" align="center">
+            © 2023 ImagN. All rights reserved.
+          </Typography>
+        </Container>
+      </Box>
     );
   }
 
   render() {
-    const appStyle = {
-      backgroundColor: '#000000',
-      color: '#f8fafc',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column' as 'column'
-    };
-
     return (
-      <div style={appStyle}>
-        {this.renderHeader(this.state)}
-        {this.renderContent(this.state)}
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+        color: 'text.primary'
+      }}>
+        {this.renderHeader()}
+        <Box component="main" sx={{ flexGrow: 1 }}>
+          {this.renderContent()}
+        </Box>
+        {this.renderFooter()}
+        
+        {/* DevToolsButton is now handled by Material-UI and will be correctly positioned */}
         <DevToolsButton />
-      </div>
+      </Box>
     );
   }
 } 

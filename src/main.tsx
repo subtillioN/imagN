@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { MainView } from './components/MainView';
+import darkTheme from './theme/darkTheme';
 
 // Create initial sources for the MainView
 const createStream = () => {
@@ -60,14 +62,19 @@ const sources = {
 // Initialize React app
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
-// Render the MainView component
+// Render the MainView component with theme provider
 root.render(
   <React.StrictMode>
-    <MainView sources={sources} />
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <MainView sources={sources} />
+    </ThemeProvider>
   </React.StrictMode>
 );
 
 // For Hot Module Replacement
+// @ts-ignore: Unreachable code error
 if (import.meta && import.meta.hot) {
+  // @ts-ignore: Unreachable code error
   import.meta.hot.accept();
 } 

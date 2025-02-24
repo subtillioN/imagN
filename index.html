@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <title>ImagN - AI Image Generation Interface</title>
     <style>
       html, body, #root {
@@ -11,43 +15,11 @@
         padding: 0;
         width: 100%;
         height: 100%;
-        background-color: #000000 !important;
-        color: #f8fafc;
-        font-family: system-ui, -apple-system, sans-serif;
-        position: relative;
+        font-family: 'Roboto', sans-serif;
       }
       
-      /* Force dark theme on all elements */
       * {
-        background-color: #000000 !important;
-        color: #f8fafc !important;
-        border-color: #101530 !important;
-      }
-      
-      /* Override panel backgrounds */
-      [class*="panel"], [class*="workspace"], [class*="header"], [class*="footer"], 
-      [class*="container"], [class*="content"], [class*="button"] {
-        background-color: #000000 !important;
-        border-color: #101530 !important;
-      }
-      
-      /* Add a subtle glow to buttons and interactive elements */
-      button, [role="button"], [class*="button"] {
-        background-color: rgba(255, 255, 255, 0.02) !important;
-        box-shadow: 0 0 5px rgba(0, 0, 255, 0.1) !important;
-      }
-      
-      button:hover, [role="button"]:hover, [class*="button"]:hover {
-        background-color: rgba(255, 255, 255, 0.04) !important;
-      }
-      
-      /* Ensure fixed positioning works correctly */
-      .dev-tools-button-container {
-        position: fixed !important;
-        top: 16px !important;
-        right: 16px !important;
-        left: auto !important;
-        z-index: 9999 !important;
+        box-sizing: border-box;
       }
     </style>
   </head>

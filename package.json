@@ -61,11 +61,16 @@
     "@cycle/dom": "^23.1.0",
     "@cycle/run": "^5.7.0",
     "@cycle/state": "^1.7.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.5",
+    "@mui/material": "^6.4.5",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "callbag-basics": "^4.0.0",
     "callbag-from-obs": "^1.2.0",
     "callbag-to-obs": "^1.0.0",
+    "recharts": "^2.15.1",
     "xstream": "^11.14.0"
   },
   "devDependencies": {

@@ -1,187 +1,222 @@
-# Local Development Setup Tasks
+# Local Development Setup
 
-## P0: Critical Path Tasks
+## Prerequisites
 
-### Project Initialization
-- [ ] Initialize new npm project
+- Node.js (v18.x or later)
+- npm (v9.x or later)
+- Git
+
+## Initial Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-organization/imagn.git
+   cd imagn
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+   
+   > **Note**: The `--legacy-peer-deps` flag may be necessary to resolve any dependency conflicts, particularly with Material-UI packages.
+
+## Environment Configuration
+
+1. Create a `.env` file in the project root (if it doesn't exist):
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Update the environment variables as needed:
+   ```
+   VITE_API_URL=http://localhost:3000/api
+   VITE_WEBSOCKET_URL=ws://localhost:3000/ws
+   ```
+
+## Available Scripts
+
+### Development
+
+- Start the development server:
   ```bash
-  npm init -y
+  npm run dev
   ```
-- [ ] Set up basic directory structure
-  ```
-  src/
-  ├── components/
-  ├── streams/
-  ├── types/
-  ├── utils/
-  └── test/
-  ```
-- [ ] Create initial .gitignore
-  ```
-  node_modules/
-  dist/
-  coverage/
-  .env
-  ```
+  This starts the development server at http://localhost:3004/
 
-### Core Dependencies
-- [ ] Install Cycle.js
+- Build the project:
   ```bash
-  npm install @cycle/core @cycle/dom @cycle/run
+  npm run build
   ```
-- [ ] Install Callbags
+
+- Preview the production build:
   ```bash
-  npm install callbag-basics callbag-from-obs callbag-to-obs
+  npm run preview
   ```
-- [ ] Install development dependencies
+
+### Testing
+
+- Run tests:
   ```bash
-  npm install --save-dev typescript vite @types/node
+  npm test
   ```
 
-### Development Server
-- [ ] Configure Vite
-  ```typescript
-  // vite.config.ts
-  export default {
-    server: {
-      port: 3000
-    },
-    build: {
-      target: 'esnext'
-    }
-  }
-  ```
-- [ ] Create development entry point
-  ```typescript
-  // src/main.ts
-  import {run} from '@cycle/run';
-  import {makeDOMDriver} from '@cycle/dom';
-  
-  function main(sources) {
-    // Initial implementation
-    return {
-      DOM: xs.of(
-        div('.app', [
-          h1('ImagN')
-        ])
-      )
-    };
-  }
-  
-  run(main, {
-    DOM: makeDOMDriver('#app')
-  });
-  ```
-- [ ] Add development scripts to package.json
-  ```json
-  {
-    "scripts": {
-      "dev": "vite",
-      "build": "vite build",
-      "preview": "vite preview"
-    }
-  }
-  ```
-
-### Basic Testing
-- [ ] Install Jest and related dependencies
+- Run tests with coverage:
   ```bash
-  npm install --save-dev jest @types/jest ts-jest
+  npm run test:coverage
   ```
-- [ ] Create Jest configuration
-  ```typescript
-  // jest.config.ts
-  export default {
-    preset: 'ts-jest',
-    testEnvironment: 'jsdom',
-    setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts']
-  };
-  ```
-- [ ] Create first test file
-  ```typescript
-  // src/test/setup.ts
-  import '@testing-library/jest-dom';
-  
-  // src/components/App.test.ts
-  describe('App', () => {
-    it('should render', () => {
-      // Initial test
-    });
-  });
-  ```
-
-## P1: Development Infrastructure
-
-### TypeScript Configuration
-- [ ] Create tsconfig.json
-- [ ] Set up path aliases
-- [ ] Configure strict mode
 
 ### Linting and Formatting
-- [ ] Install ESLint and Prettier
-- [ ] Configure ESLint rules
-- [ ] Set up Prettier configuration
-- [ ] Add lint scripts
 
-### Test Coverage
-- [ ] Configure Jest coverage reporting
-- [ ] Set coverage thresholds
-- [ ] Add coverage scripts
+- Lint the codebase:
+  ```bash
+  npm run lint
+  ```
 
-### Build System
-- [ ] Configure production build
-- [ ] Set up build optimization
-- [ ] Create build scripts
+- Format the codebase:
+  ```bash
+  npm run format
+  ```
 
-### CI Pipeline
-- [ ] Create GitHub Actions workflow
-- [ ] Configure test running
-- [ ] Set up build verification
+## Project Structure
 
-## P2: Core Architecture
+```
+imagn/
+├── public/            # Static assets
+├── src/               # Source code
+│   ├── components/    # React components
+│   ├── streams/       # Stream definitions and operators
+│   ├── types/         # TypeScript type definitions
+│   ├── utils/         # Utility functions
+│   ├── theme/         # Material-UI theme configuration
+│   ├── App.tsx        # Main application component
+│   └── main.tsx       # Application entry point
+├── test/              # Test files
+├── .env               # Environment variables
+├── .gitignore         # Git ignore file
+├── package.json       # Project dependencies and scripts
+├── tsconfig.json      # TypeScript configuration
+└── vite.config.ts     # Vite configuration
+```
 
-### Stream Utilities
-- [ ] Create basic stream operators
-- [ ] Set up stream testing utilities
-- [ ] Implement stream lifecycle management
+## Key Dependencies
 
-### Component System
-- [ ] Create base component structure
-- [ ] Implement component lifecycle
-- [ ] Set up component testing utilities
+### Core
+- React
+- TypeScript
+- Vite
 
-### State Management
-- [ ] Implement state streams
-- [ ] Create action handlers
-- [ ] Set up state persistence
+### UI & Styling
+- Material-UI (@mui/material)
+- Material Icons (@mui/icons-material)
+- Emotion (@emotion/react, @emotion/styled)
 
-## Success Criteria
+### Streaming & State Management
+- xstream
+- Cycle.js
+- Callbags
 
-### P0 Completion
-- Development server running successfully
-- Basic application rendering
-- Initial tests passing
+### Testing
+- Jest
+- React Testing Library
+- Jest DOM
 
-### P1 Completion
-- All linting rules passing
-- Test coverage meeting thresholds
-- CI pipeline operational
+## Material-UI Theme Setup
 
-### P2 Completion
-- Stream utilities tested and working
-- Component system operational
-- State management functional
+The application uses Material-UI with a custom dark theme. The theme is configured in `src/theme/darkTheme.ts`:
 
-## Next Steps
+```typescript
+// src/theme/darkTheme.ts
+import { createTheme } from '@mui/material/styles';
 
-1. Complete P0 tasks to enable basic development
-2. Set up P1 infrastructure for quality assurance
-3. Implement P2 architecture for feature development
-4. Begin implementing features with TDD approach
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#3b82f6',
+    },
+    secondary: {
+      main: '#10b981',
+    },
+    background: {
+      default: '#000000',
+      paper: '#121212',
+    },
+    text: {
+      primary: '#f3f4f6',
+      secondary: '#9ca3af',
+    },
+  },
+  // Other theme options...
+});
 
-## Notes
+export default darkTheme;
+```
 
-- All configuration should follow the Cursor rules
-- Each task should have corresponding tests
-- Documentation should be updated as tasks are completed
-- Code quality metrics should be maintained throughout 
+This theme is applied at the root level in `src/main.tsx` using ThemeProvider:
+
+```jsx
+// src/main.tsx
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import darkTheme from './theme/darkTheme';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>
+);
+```
+
+## Common Issues and Solutions
+
+### Dependency Conflicts
+
+If you encounter dependency conflicts, particularly with React or Material-UI, try:
+
+```bash
+npm install --legacy-peer-deps
+```
+
+### Build Errors
+
+If you encounter build errors related to TypeScript:
+
+1. Check the TypeScript configuration in `tsconfig.json`
+2. Ensure correct types are imported
+3. Run `npm run build` with the `--verbose` flag to get more information
+
+### Development Server Issues
+
+If the development server fails to start:
+
+1. Check if the port is already in use
+2. Verify that all dependencies are installed
+3. Check for errors in the terminal output
+4. Try clearing the cache: `npm run clean:cache`
+
+## Getting Help
+
+If you encounter issues not covered here, please:
+
+1. Check the project documentation
+2. Review existing issues on GitHub
+3. Reach out to the development team
+4. Create a new issue with detailed information about the problem
+
+## Contribution Guidelines
+
+Before contributing, please:
+
+1. Set up your development environment as described above
+2. Familiarize yourself with the codebase and architecture
+3. Follow the coding standards and guidelines
+4. Write tests for your changes
+5. Update documentation as needed
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). 

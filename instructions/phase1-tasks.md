@@ -1,176 +1,208 @@
-# Phase 1 Detailed Tasks and Test Specifications
+# Phase 1 Tasks
 
-## 1. Environment Setup Tasks
+## Core UI Implementation
 
-### 1.1 Project Initialization
-- [ ] Initialize Git repository
-- [ ] Create .gitignore with appropriate rules
-- [ ] Set up npm project with package.json
-- [ ] Set up JavaScript project structure
-- [ ] Set up Vite build system
-- [ ] Configure ESLint and Prettier
+### Project Setup
+- [x] Initialize project with Vite
+- [x] Configure TypeScript
+- [x] Set up folder structure
+- [x] Install Material-UI dependencies
+- [x] Configure Material-UI theme system
+- [x] Set up dark theme with MUI ThemeProvider
 
-### 1.2 Testing Infrastructure
-- [ ] Install and configure Jest for JavaScript testing
-- [ ] Set up Testing Library for component testing
-- [ ] Configure test coverage reporting
-- [ ] Add test scripts to package.json
+### Basic Component Structure
+- [x] Create MainView component using MUI
+- [x] Implement App component with proper layout
+- [x] Set up responsive design with MUI Grid
+- [x] Implement DevToolsButton with proper positioning
+- [ ] Create basic navigation structure
+- [ ] Implement error boundary components
 
-### 1.3 CI/CD Setup
-- [ ] Configure GitHub Actions workflow
-- [ ] Set up automated testing pipeline
-- [ ] Configure build and deployment scripts
+### UI Standards
+- [x] Implement consistent dark theme with Material-UI
+- [x] Set up typography standards with MUI Typography
+- [x] Configure component spacing system
+- [x] Implement accessible UI components
+- [ ] Create reusable form components
+- [ ] Establish responsive breakpoints
 
-## 2. Core FRP Architecture Tasks
+## Developer Tools
 
-### 2.1 Stream Management Setup
-- [ ] Set up callbags infrastructure
-- [ ] Create core stream operators
-- [ ] Implement stream lifecycle management
+### Developer Tools UI
+- [x] Create DevToolsButton component with Material-UI
+- [x] Position button in the upper-right corner
+- [x] Implement proper button styling with hover effects
+- [ ] Create expandable panel for developer tools
+- [ ] Implement task visualization components
+- [ ] Add progress tracking visualization
+
+### Developer Tools Functionality
+- [ ] Implement open/close toggle for panel
+- [ ] Create task data service
+- [ ] Implement feature analysis visualization
+- [ ] Add debug mode toggle
+- [ ] Create log viewer component
+- [ ] Implement theme switcher for testing
+
+## State Management
+
+### Stream Setup
+- [ ] Set up core streams architecture
+- [ ] Implement intent stream patterns
+- [ ] Create model stream utilities
+- [ ] Set up view stream integration
+- [ ] Implement stream operators
 - [ ] Create stream testing utilities
 
-### 2.2 MVI Pattern Implementation
-- [ ] Create Model layer structure
-- [ ] Implement View layer architecture
-- [ ] Set up Intent handlers
-- [ ] Create state management system
+### Integration with React
+- [ ] Create custom React hooks for streams
+- [ ] Implement component-level stream integration
+- [ ] Set up application-level state management
+- [ ] Create stream debugging utilities
+- [ ] Implement state persistence
+- [ ] Add time-travel debugging
 
-### 2.3 Component Foundation
-- [ ] Create base component structure
-- [ ] Implement component lifecycle hooks
-- [ ] Set up component communication patterns
+## Backend Integration
+
+### API Client
+- [ ] Create API client structure
+- [ ] Implement request/response interfaces
+- [ ] Set up error handling
+- [ ] Create authentication integration
+- [ ] Implement caching mechanisms
+- [ ] Add retry logic
+
+### Real-time Updates
+- [ ] Configure WebSocket integration
+- [ ] Implement real-time stream updates
+- [ ] Create notification system
+- [ ] Set up progress tracking
+- [ ] Implement status updates
+- [ ] Add connection state management
+
+## Testing Framework
+
+### Unit Testing
+- [ ] Set up Jest configuration
 - [ ] Create component testing utilities
+- [ ] Implement stream testing helpers
+- [ ] Set up mock services
+- [ ] Create test data generators
+- [ ] Implement snapshot testing
 
-## 3. Initial Test Specifications
+### Integration Testing
+- [ ] Set up testing environment
+- [ ] Create integration test suite
+- [ ] Implement end-to-end tests
+- [ ] Set up visual regression testing
+- [ ] Create performance testing
+- [ ] Implement accessibility testing
 
-### 3.1 Stream Management Tests
+## Documentation
 
-```typescript
-describe('Stream Management', () => {
-  describe('Stream Lifecycle', () => {
-    it('should properly initialize a stream', () => {
-      // Test stream creation and initialization
-    });
+### Code Documentation
+- [ ] Set up documentation standards
+- [ ] Document component API
+- [ ] Create stream documentation
+- [ ] Document theming system
+- [ ] Add usage examples
+- [ ] Create architectural overview
 
-    it('should clean up resources when stream is terminated', () => {
-      // Test stream cleanup
-    });
+### User Documentation
+- [ ] Create user guide
+- [ ] Document feature usage
+- [ ] Add troubleshooting section
+- [ ] Create video tutorials
+- [ ] Implement help system
+- [ ] Add contextual documentation
 
-    it('should handle stream errors gracefully', () => {
-      // Test error handling in streams
-    });
-  });
+## Example Component Implementation
 
-  describe('Stream Operators', () => {
-    it('should correctly map values', () => {
-      // Test basic map operator
-    });
+### Material-UI DevToolsButton
+```jsx
+import React from 'react';
+import { IconButton, Tooltip } from '@mui/material';
+import { Settings as SettingsIcon } from '@mui/icons-material';
 
-    it('should properly filter values', () => {
-      // Test filter operator
-    });
-
-    it('should combine multiple streams', () => {
-      // Test stream combination
-    });
-  });
-});
+export default function DevToolsButton() {
+  return (
+    <Tooltip title="Developer Tools - Task & Feature Analysis" arrow placement="left">
+      <IconButton
+        aria-label="Developer Tools"
+        color="primary"
+        sx={{
+          position: 'fixed',
+          top: '16px',
+          right: '16px',
+          zIndex: 9999,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          '&:hover': {
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            boxShadow: '0 0 12px rgba(59, 130, 246, 0.3)',
+          },
+          boxShadow: '0 0 8px rgba(59, 130, 246, 0.2)',
+        }}
+      >
+        <SettingsIcon />
+      </IconButton>
+    </Tooltip>
+  );
+}
 ```
 
-### 3.2 Component Tests
-
+### Material-UI Theme Configuration
 ```typescript
-describe('Base Component', () => {
-  describe('Lifecycle', () => {
-    it('should mount successfully', () => {
-      // Test component mounting
-    });
+// src/theme/darkTheme.ts
+import { createTheme } from '@mui/material/styles';
 
-    it('should unmount cleanly', () => {
-      // Test component unmounting
-    });
-
-    it('should update on stream changes', () => {
-      // Test component updates
-    });
-  });
-
-  describe('Props Management', () => {
-    it('should receive props correctly', () => {
-      // Test props reception
-    });
-
-    it('should update when props change', () => {
-      // Test props updates
-    });
-  });
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#3b82f6',
+    },
+    secondary: {
+      main: '#10b981',
+    },
+    background: {
+      default: '#000000',
+      paper: '#121212',
+    },
+    text: {
+      primary: '#f3f4f6',
+      secondary: '#9ca3af',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
+    },
+  },
 });
+
+export default darkTheme;
 ```
 
-### 3.3 State Management Tests
+## Next Steps
 
-```typescript
-describe('State Management', () => {
-  describe('State Updates', () => {
-    it('should initialize with default state', () => {
-      // Test state initialization
-    });
-
-    it('should update state immutably', () => {
-      // Test immutable state updates
-    });
-
-    it('should handle concurrent updates', () => {
-      // Test concurrent state modifications
-    });
-  });
-
-  describe('State Persistence', () => {
-    it('should persist state changes', () => {
-      // Test state persistence
-    });
-
-    it('should hydrate state correctly', () => {
-      // Test state hydration
-    });
-  });
-});
-```
-
-## 4. Dependencies
-
-### 4.1 Core Dependencies
-- Cycle.js
-- Callbags
-- xstream
-
-### 4.2 Testing Dependencies
-- Jest
-- Testing Library
-- jest-dom
-
-### 4.3 Development Dependencies
-- Vite
-- ESLint
-- Prettier
-- Babel
-
-## 5. Definition of Done
-
-### 5.1 Environment Setup
-- All development tools configured and working
-- Build process successful
-- Tests running correctly
-- CI/CD pipeline operational
-
-### 5.2 Core Architecture
-- Stream management system tested and operational
-- Base components implemented and tested
-- State management system working correctly
-- All core tests passing
-
-### 5.3 Quality Metrics
-- Test coverage > 90%
-- No ESLint warnings
-- All TypeScript checks passing
-- Build size optimized
+1. Complete the developer tools panel implementation
+2. Implement stream integration with React components
+3. Set up API client for backend communication
+4. Create basic image generation interface
+5. Implement responsive layout for all screen sizes
+6. Add unit tests for core components
+7. Complete documentation for phase 1 features

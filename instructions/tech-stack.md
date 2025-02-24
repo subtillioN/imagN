@@ -3,10 +3,20 @@
 ## Core Technologies
 
 ### Frontend
+- **React** - Modern UI library for component-based development
+- **Material-UI (MUI)** - Comprehensive component library implementing Google's Material Design
+- **Emotion** - CSS-in-JS library for styling Material-UI components
 - **Cycle.js** - Core framework implementing functional reactive programming principles
 - **Callbags** - Lightweight reactive streams library for state management
 - **JavaScript (ES6+)** - Modern JavaScript features for clean, maintainable code
+- **TypeScript** - Static typing for enhanced development experience
 - **Vite** - Modern build tool for fast development and optimized production builds
+
+### UI Components & Visualization
+- **Material-UI (MUI)** - Component library with consistent design language
+- **MUI Icons** - Comprehensive icon set
+- **Recharts** - Charting library for data visualization
+- **CSS-in-JS** - Dynamic styling through Emotion
 
 ### Backend
 - **Node.js** - Runtime environment
@@ -39,6 +49,7 @@
 ### Code Quality
 - **ESLint** - Static code analysis
 - **Prettier** - Code formatting
+- **TypeScript** - Static type checking
 - **JSDoc** - Code documentation and type hints
 
 ### Testing
@@ -90,9 +101,18 @@
 ## Development Principles
 
 ### Architecture
+- Component-Based Architecture
 - Functional Reactive Programming
 - Microservices Architecture
 - Event-Driven Design
+- Theming and Styling System
+
+### UI/UX Standards
+- Material Design Guidelines
+- Consistent Dark Theme
+- Responsive Layouts
+- Accessibility Compliance
+- Component Reusability
 
 ### Code Standards
 - Pure Functions
@@ -110,11 +130,13 @@
 
 ### Core Dependencies
 - Node.js >= 18.x
-
+- React >= 19.x
+- Material-UI >= 5.x
 - Cycle.js >= 22.x
 - Express.js >= 4.x
 
 ### Development Dependencies
+- TypeScript >= 4.9.x
 - ESLint >= 8.x
 - Jest >= 29.x
 - Docker >= 20.x
