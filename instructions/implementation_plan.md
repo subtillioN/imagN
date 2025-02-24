@@ -43,14 +43,14 @@
 - Implement state management
 
 ### 3.2 Core Components
-- Develop base UI components
-- Implement tabbed interface for image/video workspaces
+- [x] Develop base UI components
+- [ ] Implement tabbed interface for image/video workspaces
 - Build node-based workflow editor
-  - Canvas-based node editor component
-  - Node connection visualization system
-  - Workflow serialization and loading
-  - Node preset management
-  - Mini-map for large workflows
+  - [x] Canvas-based node editor component
+  - [x] Node connection visualization system
+  - [x] Workflow serialization and loading
+  - [ ] Node preset management
+  - [ ] Mini-map for large workflows
 - Implement image generation interface
   - Real-time preview capabilities
   - Parameter controls integration
