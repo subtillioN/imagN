@@ -1,8 +1,8 @@
 import React from 'react';
 import { IconButton, Tooltip } from '@mui/material';
-import { Settings as SettingsIcon } from '@mui/icons-material';
+import SettingsIcon from '@mui/icons-material/Settings';
 
-export const DevToolsButton: React.FC = () => {
+export function DevToolsButton() {
   return (
     <Tooltip title="Developer Tools - Task & Feature Analysis" arrow placement="left">
       <IconButton
@@ -25,4 +25,6 @@ export const DevToolsButton: React.FC = () => {
       </IconButton>
     </Tooltip>
   );
-}; 
+}
+
+export default DevToolsButton; 

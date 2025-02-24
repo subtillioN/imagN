@@ -19,7 +19,6 @@ import {
   Add as AddIcon,
   Collections as CollectionsIcon
 } from '@mui/icons-material';
-import { DevToolsButton } from './DevTools/DevToolsButton';
 
 interface MainViewProps {
   sources?: {
@@ -260,9 +259,6 @@ export class MainView extends Component<MainViewProps, MainViewState> {
           {this.renderContent()}
         </Box>
         {this.renderFooter()}
-        
-        {/* DevToolsButton is now handled by Material-UI and will be correctly positioned */}
-        <DevToolsButton />
       </Box>
     );
   }
