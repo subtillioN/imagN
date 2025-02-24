@@ -1,23 +1,22 @@
 .dev-tools-button {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
   border: none;
-  background-color: transparent;
+  background-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
-  z-index: 9999;
+  z-index: 10;
   border-radius: 4px;
+  padding: 0;
 }
 
 .dev-tools-button:hover {
   color: #90caf9;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .tooltip-container {
@@ -36,5 +35,23 @@
   border-radius: 4px;
   font-size: 12px;
   white-space: nowrap;
-  z-index: 1000;
+  z-index: 50;
+  /* Viewport boundary detection */
+  max-width: calc(100vw - 20px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add media queries for responsive behavior */
+@media (max-width: 768px) {
+  .dev-tools-button {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .tooltip-container:hover::after {
+    bottom: auto;
+    top: 100%;
+    margin-top: 5px;
+  }
 }

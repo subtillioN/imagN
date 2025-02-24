@@ -55,6 +55,10 @@
   background-color: var(--background-dark);
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-light);
 }
 
 .logo {
@@ -64,13 +68,15 @@
 }
 
 .main-nav {
-  flex: 1;
+  margin-left: var(--spacing-md);
 }
 
 .nav-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  gap: var(--spacing-md);
 }
 
 .nav-item {
@@ -87,6 +93,12 @@
 
 .nav-item.active {
   background-color: var(--primary-color);
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
 }
 
 .workspace {
@@ -120,16 +132,6 @@
   overflow: auto;
 }
 
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-md);
-  background-color: var(--background-dark);
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-light);
-}
-
 .app-content {
   padding: var(--spacing-lg) 0;
   background-color: var(--background-dark);
@@ -150,6 +152,16 @@
   font-weight: 500;
   transition: all var(--transition-fast);
   cursor: pointer;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .button-primary {
@@ -202,13 +214,15 @@
     gap: var(--spacing-md);
   }
 }
-html, body, #app {
+
+html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   color: var(--text-light);
   font-family: var(--font-family);
+  background-color: var(--background-dark);
 }
 
 .app-container {
