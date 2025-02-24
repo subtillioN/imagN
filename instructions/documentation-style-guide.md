@@ -16,15 +16,15 @@ All Mermaid diagrams should use the dark theme configuration:
 
 Use these specific colors for different diagram components:
 
-- Primary Features: `#1a237e` (Deep Blue)
-- Secondary Features: `#0d47a1` (Medium Blue)
-- Video Processing: `#4a148c` (Deep Purple)
-- Workflow Management: `#e65100` (Deep Orange)
-- Advanced Features: `#bf360c` (Burnt Orange)
-- Frontend Components: `#283593` (Indigo)
-- Backend Components: `#880e4f` (Deep Pink)
-- External Services: `#e65100` (Deep Orange)
-- Refactoring Tasks: `#1b5e20` (Deep Green)
+- Primary Features: `#2f3545` (Desaturated Deep Blue-Gray)
+- Secondary Features: `#3a4255` (Muted Medium Blue-Gray)
+- Video Processing: `#383344` (Desaturated Deep Purple-Gray)
+- Workflow Management: `#4a4339` (Muted Deep Orange-Gray)
+- Advanced Features: `#463834` (Desaturated Burnt Orange-Gray)
+- Frontend Components: `#2f3545` (Muted Indigo-Gray)
+- Backend Components: `#403339` (Desaturated Deep Pink-Gray)
+- External Services: `#4a4339` (Muted Deep Orange-Gray)
+- Refactoring Tasks: `#374538` (Desaturated Deep Green-Gray)
 
 ### Typography
 

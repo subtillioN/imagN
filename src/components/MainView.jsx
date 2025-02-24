@@ -1,6 +1,7 @@
 import React from 'react';
 import { BaseView } from '../mvi/view';
 import styles from '../styles/base.module.css';
+import { DevToolsButton } from './DevTools/DevToolsButton';
 
 export class MainView extends BaseView {
   constructor(props) {
@@ -47,16 +48,18 @@ export class MainView extends BaseView {
   renderHeader(state) {
     return (
       <header className={styles['app-header']}>
-        <div className={`${styles.flex} ${styles['items-center']} ${styles['gap-md']}`}>
-          <div className={styles.logo}>ImagN</div>
-          <nav className={styles['main-nav']}>
-            <ul className={`${styles['nav-list']} ${styles.flex} ${styles['gap-md']}`}>
-              <li role="listitem" aria-label="Image Workspace" className={`${styles['nav-item']} ${styles['active']}`}>Image Workspace</li>
-              <li role="listitem" aria-label="Video Workspace" className={styles['nav-item']}>Video Workspace</li>
-              <li role="listitem" aria-label="Node Editor" className={styles['nav-item']}>Node Editor</li>
-              <li role="listitem" aria-label="Presets" className={styles['nav-item']}>Presets</li>
-            </ul>
-          </nav>
+        <div className={`${styles.flex} ${styles['items-center']} ${styles['gap-md']} ${styles['justify-between']}`}>
+          <div className={`${styles.flex} ${styles['items-center']} ${styles['gap-md']}`}>
+            <div className={styles.logo}>ImagN</div>
+            <nav className={styles['main-nav']}>
+              <ul className={`${styles['nav-list']} ${styles.flex} ${styles['gap-md']}`}>
+                <li role="listitem" aria-label="Image Workspace" className={`${styles['nav-item']} ${styles['active']}`}>Image Workspace</li>
+                <li role="listitem" aria-label="Video Workspace" className={styles['nav-item']}>Video Workspace</li>
+                <li role="listitem" aria-label="Node Editor" className={styles['nav-item']}>Node Editor</li>
+                <li role="listitem" aria-label="Presets" className={styles['nav-item']}>Presets</li>
+              </ul>
+            </nav>
+          </div>
           <div className={`${styles['nav-controls']} ${styles.flex} ${styles['gap-sm']}`}>
             <div className={`${styles.button} ${styles['button-primary']}`}>New Project</div>
             <div className={styles.button}>Gallery</div>
@@ -134,7 +137,8 @@ export class MainView extends BaseView {
 
   view(state) {
     return (
-      <div className={styles['app-container']}>
+      <div className={styles['app-container']} style={{ position: 'relative' }}>
+        <DevToolsButton />
         {this.renderHeader(state)}
         {this.renderContent(state)}
         {this.renderFooter(state)}

@@ -1,6 +1,6 @@
 .analysis-container {
   padding: 2rem;
-  background-color: #121212;
+  background-color: var(--background-dark);
   color: #ffffff;
 }
 

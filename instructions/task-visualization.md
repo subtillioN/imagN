@@ -34,10 +34,17 @@ graph TD
     style H fill:#0277bd,color:#ffffff
     style I fill:#0277bd,color:#ffffff
     style J fill:#0277bd,color:#ffffff
-    style K fill:#0d47a1,color:#ffffff
+    style K fill:#00c853,color:#ffffff
     style L fill:#0277bd,color:#ffffff
     style M fill:#0277bd,color:#ffffff
     style N fill:#0277bd,color:#ffffff
+
+    %% Completed Features
+    click K "Completed: Dark Theme Integration"
+    %% In Progress Features
+    click B "In Progress: Feature Analysis"
+    click C "In Progress: Task Tracking"
+    click D "In Progress: Progress Metrics"
 ```
 
 ## Feature-based Task Organization
