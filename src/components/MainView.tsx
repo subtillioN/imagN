@@ -19,6 +19,8 @@ import {
   Add as AddIcon,
   Collections as CollectionsIcon
 } from '@mui/icons-material';
+import DevToolsButton from './DevToolsButton';
+import ThemeToggleButton from './ThemeToggleButton';
 
 interface MainViewProps {
   sources?: {
@@ -94,8 +96,18 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     return (
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar>
-          <Typography variant="h5" component="div" sx={{ flexGrow: 0, fontWeight: 'bold', mr: 4 }}>
-            ImagN
+          <Typography 
+            variant="h3" 
+            component="div" 
+            sx={{ 
+              flexGrow: 0, 
+              fontWeight: 'bold', 
+              mr: 4,
+              fontSize: '2.5rem',
+              letterSpacing: '-0.5px'
+            }}
+          >
+            imagN
           </Typography>
           
           <Tabs 
@@ -111,7 +123,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
             <Tab label="Presets" />
           </Tabs>
           
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <Button 
               variant="contained" 
               color="primary" 
@@ -126,6 +138,8 @@ export class MainView extends Component<MainViewProps, MainViewState> {
             >
               Gallery
             </Button>
+            <DevToolsButton />
+            <ThemeToggleButton />
           </Box>
         </Toolbar>
       </AppBar>
@@ -238,7 +252,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       >
         <Container maxWidth="sm">
           <Typography variant="body2" color="text.secondary" align="center">
-            © 2023 ImagN. All rights reserved.
+            © 2023 imagN. All rights reserved.
           </Typography>
         </Container>
       </Box>

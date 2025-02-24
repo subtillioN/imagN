@@ -4,15 +4,11 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 export function DevToolsButton() {
   return (
-    <Tooltip title="Developer Tools - Task & Feature Analysis" arrow placement="left">
+    <Tooltip title="Developer Tools - Task & Feature Analysis" arrow placement="bottom">
       <IconButton
         aria-label="Developer Tools"
         color="primary"
         sx={{
-          position: 'fixed',
-          top: '16px',
-          right: '16px',
-          zIndex: 9999,
           backgroundColor: 'rgba(0, 0, 0, 0.4)',
           '&:hover': {
             backgroundColor: 'rgba(59, 130, 246, 0.2)',

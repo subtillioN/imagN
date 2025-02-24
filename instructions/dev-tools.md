@@ -15,6 +15,7 @@ The Developer Tools feature provides real-time insights into project features, t
   - Hover animation with increased glow
 - Tooltip text: "Developer Tools - Task & Feature Analysis"
 - Accessibility: Proper aria-label attributes
+- **Note**: Implementation now consolidated in `/src/components/DevToolsButton.tsx` (previous implementations in `/components/DevTools/` directory have been removed)
 
 ```jsx
 // Implementation with Material-UI
@@ -123,3 +124,7 @@ pie title Development Progress
 - Developer tools access control
 - Data sensitivity handling
 - Performance impact monitoring
+
+### Integration in Application
+- Added directly in `main.tsx` alongside `MainView` and `ThemeToggleButton`
+- Rendered within the `AppThemeProvider` to ensure proper theme context

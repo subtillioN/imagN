@@ -16,16 +16,11 @@ import { ThemeName, themes } from '../theme';
 import { useAppTheme } from './ThemeProvider';
 
 interface ThemeToggleButtonProps {
-  position?: {
-    top?: string | number;
-    right?: string | number;
-    bottom?: string | number;
-    left?: string | number;
-  };
+  className?: string;
 }
 
 export const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({
-  position = { top: '16px', right: '64px' },
+  className,
 }) => {
   const theme = useTheme();
   const { currentTheme, setTheme } = useAppTheme();
@@ -49,15 +44,13 @@ export const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({
 
   return (
     <>
-      <Tooltip title="Change Theme" arrow placement="left">
+      <Tooltip title="Change Theme" arrow placement="bottom">
         <IconButton
           aria-label="Change Theme"
           color="primary"
           onClick={handleClick}
+          className={className}
           sx={{
-            position: 'fixed',
-            ...position,
-            zIndex: 9999,
             backgroundColor: 'rgba(0, 0, 0, 0.4)',
             '&:hover': {
               backgroundColor: 'rgba(59, 130, 246, 0.2)',

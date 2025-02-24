@@ -5,6 +5,10 @@
 ### Frontend
 - **React** - Modern UI library for component-based development
 - **Material-UI (MUI)** - Comprehensive component library implementing Google's Material Design
+  - Multiple theme variants (dark, high contrast, neon, minimal)
+  - Responsive layouts with Grid system
+  - Component styling with sx prop
+  - Theme customization and extension
 - **Emotion** - CSS-in-JS library for styling Material-UI components
 - **Cycle.js** - Core framework implementing functional reactive programming principles
 - **Callbags** - Lightweight reactive streams library for state management
@@ -109,7 +113,11 @@
 
 ### UI/UX Standards
 - Material Design Guidelines
-- Consistent Dark Theme
+- Multiple theme support:
+  - Dark Theme (default) - Modern dark interface with blue accents
+  - High Contrast Theme - Enhanced visibility for accessibility
+  - Neon Theme - Vibrant styling with glowing elements
+  - Minimal Theme - Clean, distraction-free interface
 - Responsive Layouts
 - Accessibility Compliance
 - Component Reusability

@@ -9,12 +9,15 @@
 - [x] Install Material-UI dependencies
 - [x] Configure Material-UI theme system
 - [x] Set up dark theme with MUI ThemeProvider
+- [x] Create additional theme variants (high contrast, neon, minimal)
 
 ### Basic Component Structure
 - [x] Create MainView component using MUI
 - [x] Implement App component with proper layout
 - [x] Set up responsive design with MUI Grid
 - [x] Implement DevToolsButton with proper positioning
+- [x] Create ThemeToggleButton for theme switching
+- [x] Consolidate component implementations (removed old DevToolsButton versions)
 - [ ] Create basic navigation structure
 - [ ] Implement error boundary components
 
@@ -32,6 +35,7 @@
 - [x] Create DevToolsButton component with Material-UI
 - [x] Position button in the upper-right corner
 - [x] Implement proper button styling with hover effects
+- [x] Integrate DevToolsButton in main application layout
 - [ ] Create expandable panel for developer tools
 - [ ] Implement task visualization components
 - [ ] Add progress tracking visualization

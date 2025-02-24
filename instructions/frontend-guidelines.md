@@ -6,6 +6,7 @@
 - **Material Design**: Follow Google's Material Design guidelines
 - **MUI Components**: Use Material-UI components for UI elements
 - **Theme Customization**: Use the theme system for consistent styling
+- **Multiple Themes**: Support theme variants (dark, high contrast, neon, minimal)
 - **Responsive Design**: Implement responsive layouts using MUI Grid system
 - **Accessibility**: Ensure all components meet accessibility standards
 
@@ -150,7 +151,29 @@ src/
 </Button>
 ```
 
-### 2. Responsive Styling
+### 2. Multiple Theme Support
+```jsx
+// src/components/ThemeProvider.tsx
+import React, { useState } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { darkTheme, contrastTheme, neonTheme, minimalTheme } from '../theme';
+
+export const AppThemeProvider = ({ children }) => {
+  const [currentTheme, setCurrentTheme] = useState(darkTheme);
+  
+  // Theme context provides theme switching functionality
+  
+  return (
+    <ThemeProvider theme={currentTheme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  );
+};
+```
+
+### 3. Responsive Styling
 ```jsx
 // Responsive styling with breakpoints
 <Box
@@ -171,7 +194,7 @@ src/
 </Box>
 ```
 
-### 3. Custom Component Styling
+### 4. Custom Component Styling
 ```jsx
 // Creating styled components
 import { styled } from '@mui/material/styles';
