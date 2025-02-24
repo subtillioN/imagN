@@ -1,0 +1,17 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run TypeScript type checking
+npm run type-check
+
+# Run ESLint
+npm run lint
+
+# Run Prettier
+npm run format
+
+# Run tests
+npm run test
+
+# Check bundle size
+npm run analyze-bundle 
