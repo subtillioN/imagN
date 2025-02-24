@@ -1,0 +1,141 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MainView Component should render correctly and match snapshot 1`] = `
+<div>
+  <div
+    class="app-container"
+  >
+    <header
+      class="app-header"
+    >
+      <div
+        class="flex items-center gap-md"
+      >
+        <div
+          class="logo"
+        >
+          ImagN
+        </div>
+        <nav
+          class="main-nav"
+        >
+          <ul
+            class="nav-list flex gap-md"
+          >
+            <li
+              aria-label="Image Workspace"
+              class="nav-item active"
+              role="listitem"
+            >
+              Image Workspace
+            </li>
+            <li
+              aria-label="Video Workspace"
+              class="nav-item"
+              role="listitem"
+            >
+              Video Workspace
+            </li>
+            <li
+              aria-label="Node Editor"
+              class="nav-item"
+              role="listitem"
+            >
+              Node Editor
+            </li>
+            <li
+              aria-label="Presets"
+              class="nav-item"
+              role="listitem"
+            >
+              Presets
+            </li>
+          </ul>
+        </nav>
+        <div
+          class="nav-controls flex gap-sm"
+        >
+          <div
+            class="button button-primary"
+          >
+            New Project
+          </div>
+          <div
+            class="button"
+          >
+            Gallery
+          </div>
+        </div>
+      </div>
+    </header>
+    <main
+      class="app-content"
+    >
+      <div
+        class="container"
+      >
+        <div
+          class="workspace"
+        >
+          <div
+            class="progress-section"
+          />
+          <div
+            class="workspace-panel node-editor"
+          >
+            <div
+              class="panel-header"
+            >
+              Node Editor
+            </div>
+            <div
+              class="panel-content"
+            >
+              Node canvas will be implemented here
+            </div>
+          </div>
+          <div
+            class="workspace-panel preview"
+          >
+            <div
+              class="panel-header"
+            >
+              Preview
+            </div>
+            <div
+              class="panel-content"
+            >
+              Preview content will be displayed here
+            </div>
+          </div>
+          <div
+            class="workspace-panel properties"
+          >
+            <div
+              class="panel-header"
+            >
+              Properties
+            </div>
+            <div
+              class="panel-content"
+            >
+              Node properties will be shown here
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer
+      class="app-footer"
+    >
+      <div
+        class="footer-content"
+      >
+        <p>
+          © 2023 ImagN. All rights reserved.
+        </p>
+      </div>
+    </footer>
+  </div>
+</div>
+`;

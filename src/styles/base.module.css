@@ -1,13 +1,17 @@
 :root {
-  /* Color Palette */
-  --primary-color: #2563eb;
-  --secondary-color: #4f46e5;
-  --accent-color: #06b6d4;
+  /* Color Palette - Based on Documentation Style Guide */
+  --primary-color: #1a237e; /* Deep Blue */
+  --secondary-color: #0d47a1; /* Medium Blue */
+  --video-color: #4a148c; /* Deep Purple */
+  --workflow-color: #e65100; /* Deep Orange */
+  --advanced-color: #bf360c; /* Burnt Orange */
+  --frontend-color: #283593; /* Indigo */
+  --backend-color: #880e4f; /* Deep Pink */
   --background-light: #ffffff;
   --background-dark: #1a1a1a;
   --text-light: #f8fafc;
   --text-dark: #1e293b;
-  --border-color: #e2e8f0;
+  --border-color: #2d3748;
   
   /* Typography */
   --font-family: system-ui, -apple-system, sans-serif;
@@ -48,12 +52,82 @@
 
 /* Layout Components */
 .app-header {
+  background-color: var(--background-dark);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  color: var(--text-light);
+}
+
+.main-nav {
+  flex: 1;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  color: var(--text-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background-color: var(--primary-color);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  height: calc(100vh - 80px);
+  background-color: var(--background-dark);
+}
+
+.workspace-panel {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: var(--spacing-md);
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--text-light);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panel-content {
+  padding: var(--spacing-md);
+  color: var(--text-light);
+  height: calc(100% - 60px);
+  overflow: auto;
+}
+
+.app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md);
-  background-color: var(--background-light);
+  background-color: var(--background-dark);
   border-bottom: 1px solid var(--border-color);
+  color: var(--text-light);
 }
 
 .app-content {
