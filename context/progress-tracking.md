@@ -51,6 +51,14 @@ This document tracks the progress of the imagN project through its development p
   - [ ] Implement preset creation and editing
   - [ ] Add preset sharing functionality
   - [ ] Create preset preview thumbnails
+- [x] Redesign the category and tag system to separate concerns:
+  - [x] Update WorkflowPreset interface to include category, type, and tags fields
+  - [x] Modify workflowPresets.js to use the new structure
+  - [x] Update workflowStorage.js for compatibility with new structure
+  - [x] Redesign the UI to support category filtering and tag selection
+  - [ ] Implement tag-based search and filtering
+  - [ ] Add tag management for user-defined presets
+  - [x] Update documentation to reflect the new category/tag system
 
 ### Not Started
 - [ ] Implement image preview component
@@ -60,6 +68,45 @@ This document tracks the progress of the imagN project through its development p
 - [ ] Implement basic node editor functionality
 - [ ] Create library of preset templates
 - [ ] Implement gallery for browsing past generations
+
+## Recently Completed Tasks
+
+- Created context management system with saved profiles and vector embeddings
+- Implemented workflow preset system with system and user-defined presets
+- Fixed preset selection in New Project dialog to ensure all presets are selectable
+- Added proper categorization for both system and user workflows
+- Improved UI/UX for the New Project dialog
+- Added documentation for the preset system
+- Implemented `/context-update` command for processing testing department issues
+- Created testing department issue log system for tracking new issues
+- Converted single category string to categories array for more flexible tagging
+- Added new-features-log.md for tracking feature requests
+- Implemented auto-load context rule in Cursor
+- Updated WorkflowPreset interface to include category, type, and tags fields
+- Enhanced category and tag system with separate category, type, and tags fields
+- Updated workflowPresets.js and workflowStorage.js to support the new structure
+
+## Current Sprint Tasks
+
+### In Progress
+
+- Redesign the category and tag system to separate concerns:
+  - [x] Update WorkflowPreset interface to include category, type, and tags fields
+  - [x] Modify workflowPresets.js to use the new structure
+  - [x] Update workflowStorage.js for compatibility with new structure
+  - [x] Redesign the UI to support category filtering and tag selection
+  - [ ] Implement tag-based search and filtering
+  - [ ] Add tag management for user-defined presets
+  - [x] Update documentation to reflect the new category/tag system
+
+### Planned
+
+- [ ] Implement preset preview thumbnails
+- [ ] Add preset sharing functionality
+- [ ] Create preset editor for modifying existing presets
+- [ ] Implement preset versioning system
+- [ ] Add preset favorites/bookmarks feature
+- [x] Create a rule in .cursor/rules that automatically loads the default context
 
 ## Phase 2: Core Generation Functionality
 [Not Started]

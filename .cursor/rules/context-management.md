@@ -63,6 +63,30 @@ Example:
 
 Updates the vector embeddings for files and concepts.
 
+### Update Context
+
+```
+/context-update
+```
+
+Processes new issues from the testing department log, updates appropriate task lists and documentation, and refreshes vector embeddings for the context system.
+
+This command:
+1. Reads issues from `context/new-issues-log.md`
+2. Categorizes issues as bugs or enhancements
+3. Adds bugs to `buglog.md`
+4. Adds enhancements to `progress-tracking.md`
+5. Marks processed issues as completed in the issues log
+6. Reads feature requests from `context/new-features-log.md`
+7. Adds feature requests to the appropriate sections in `progress-tracking.md`
+8. Marks processed feature requests as completed in the features log
+9. Updates vector embeddings for all changed files
+
+Example:
+```
+/context-update
+```
+
 ## Integration
 
 These commands are implemented as Cursor editor commands that invoke JavaScript scripts in the `.cursor/scripts/` directory:
@@ -70,6 +94,7 @@ These commands are implemented as Cursor editor commands that invoke JavaScript 
 - **context-loader.js**: Script for loading context profiles
 - **context-saver.js**: Script for saving current context to a profile
 - **vector-generator.js**: Script for generating vector embeddings
+- **context-updater.js**: Script for processing new issues and updating documentation
 
 ## Configuration
 

@@ -5,6 +5,7 @@ This document tracks bugs, issues, and their resolution status throughout the de
 ## Active Bugs
 
 | ID | Description | Component | Priority | Status | Reported Date |
+| B015 | need padding above the "Project Name" input field on the  | UI/UX | Medium | Needs Fix | 2025-02-25 |
 |----|-------------|-----------|----------|--------|--------------|
 | B001 | Context menu positioning is inconsistent in dark mode | UI/UX | Medium | Under Investigation | 2024-02-23 |
 | B002 | Memory leak observed in node editor canvas after multiple edits | Node Editor | High | Needs Fix | 2024-02-24 |
@@ -25,13 +26,16 @@ This document tracks bugs, issues, and their resolution status throughout the de
 | B012 | New project presets not selectable in dropdown | Project Management | High | 2024-03-25 | Unified preset system with consistent data structure and improved preset loading in componentDidMount |
 | B013 | Inconsistent preset categorization between system and user presets | Project Management | Medium | 2024-03-25 | Implemented a unified category-based system with 'default' and 'user' categories for all presets |
 | B014 | Preset selection UI lacked clear visual separation | UI/UX | Medium | 2024-03-25 | Enhanced the preset dropdown with improved styling, subheaders, and a divider between system and user presets |
+| [FIX-001] | UI rendering issue in the sidebar navigation - Fixed margins and padding | UI/UX | Medium | 2024-03-25 | Updated margins and padding to improve layout consistency |
+| [FIX-002] | Correct typings for project and workflow interfaces | Project Management | Medium | 2024-03-25 | Updated interfaces to use consistent naming conventions and data structures |
+| [FIX-003] | Fixed preset selection in New Project dialog not displaying or allowing selection of presets | Project Management | High | 2024-03-25 | Updated MainView component to set default preset and improve UI rendering |
 
 ## Issues Under Review
 
 | ID | Description | Component | Priority | Status | Reported Date |
 |----|-------------|-----------|----------|--------|--------------|
-| I001 | Consider implementing custom scroll behavior for long lists | UI/UX | Low | Open | 2024-02-23 |
-| I002 | Investigate WebGL performance with large image datasets | Image Workspace | Medium | Open | 2024-02-24 |
+| I001 | Category system needs redesign for better organization | Workflow Presets | High | In Progress | 2025-02-25 |
+| I002 | Consider adding tag-based filtering for presets | UI/UX | Medium | Open | 2025-02-25 |
 | I003 | Evaluate alternatives for current node connection visualization | Node Editor | Medium | Open | 2024-02-24 |
 | I004 | Research better compression methods for video export | Video Workspace | Low | Open | 2024-02-24 |
 | I005 | Evaluate user experience of the workflow preset selection | Project Management | Medium | Open | 2024-03-25 |

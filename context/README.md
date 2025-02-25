@@ -34,6 +34,28 @@ This directory contains all the documentation and context files for the imagN pr
 - [context-management.md](context-management.md) - Documentation for the context management system
 - [vector-embeddings.json](vector-embeddings.json) - Vector embeddings of key files and concepts
 
+## Context Files
+
+- `progress-tracking.md`: Tracks ongoing development progress across different phases
+- `buglog.md`: Documents bugs, their status, and resolution details
+- `preset-system.md`: Explains the workflow preset system architecture
+- `app-flow.md`: Documents application flow and architecture
+- `codebase-summary.md`: Provides a high-level overview of the codebase
+- `codebase-outline.md`: Details the structure and organization of the codebase
+- `context-management.md`: Documentation for the context management system
+- `new-issues-log.md`: Testing department's log for tracking new issues before being processed
+- `new-features-log.md`: Testing department's log for tracking new feature requests before being processed
+- `category-tag-implementation.md`: Implementation plan for the category and tag system
+
+## Commands
+
+- `/load-context <profile-name>`: Load a named context profile
+- `/save-context <profile-name> [description]`: Save current context to a profile
+- `/list-contexts`: List available context profiles
+- `/create-context <profile-name> [files] [concepts] [description]`: Create a new context profile
+- `/update-vectors`: Update vector embeddings for files and concepts
+- `/context-update`: Process new issues and feature requests from the testing department logs and update task lists
+
 ## Purpose
 
 The context directory provides a comprehensive overview of the project, its architecture, and development guidelines. It serves as a reference for developers, designers, and other stakeholders to understand the project's goals, structure, and progress.

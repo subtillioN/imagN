@@ -7,11 +7,14 @@ class WorkflowPresetService {
   }
 
   initializePresets() {
-    // Default Presets
+    // Image Generation Preset
     this.registerPreset('image-generation', {
-      name: 'Image Generation',
-      description: 'Standard image generation workflow with AI models',
-      category: 'default',
+      name: 'Basic Image Generation',
+      description: 'Generate images with AI',
+      category: 'image',
+      type: 'generation',
+      tags: ['default', 'image', 'generation'],
+      categories: ['default', 'image', 'generation'],
       nodes: [
         {
           id: 'input',
@@ -52,10 +55,14 @@ class WorkflowPresetService {
       ]
     });
 
+    // Video Generation Preset
     this.registerPreset('video-generation', {
-      name: 'Video Generation',
-      description: 'Create videos from text prompts or image sequences',
-      category: 'default',
+      name: 'Basic Video Generation',
+      description: 'Generate videos with AI',
+      category: 'video',
+      type: 'generation',
+      tags: ['default', 'video', 'generation'],
+      categories: ['default', 'video', 'generation'],
       nodes: [
         {
           id: 'input',
@@ -96,10 +103,14 @@ class WorkflowPresetService {
       ]
     });
 
-    this.registerPreset('node-workflow', {
-      name: 'Node-based Workflow',
-      description: 'Advanced customizable node-based workflow for complex projects',
-      category: 'default',
+    // Node Editor Preset
+    this.registerPreset('node-editor', {
+      name: 'Custom Node Editor',
+      description: 'Create custom node-based workflows',
+      category: 'node',
+      type: 'custom',
+      tags: ['default', 'node', 'custom'],
+      categories: ['default', 'node', 'custom'],
       nodes: [
         {
           id: 'canvas',
@@ -114,11 +125,14 @@ class WorkflowPresetService {
       connections: []
     });
 
-    // Add the style transfer preset
+    // Style Transfer
     this.registerPreset('style-transfer', {
       name: 'Style Transfer Suite',
       description: 'Artistic style transfer with customizable parameters',
-      category: 'default',
+      category: 'image',
+      type: 'style',
+      tags: ['default', 'image', 'style', 'artistic'],
+      categories: ['default', 'image', 'style', 'artistic'],
       nodes: [
         {
           id: 'input',
@@ -172,6 +186,8 @@ class WorkflowPresetService {
         }
       ]
     });
+
+    // Add more presets as needed
   }
 
   registerPreset(id, preset) {
@@ -191,14 +207,61 @@ class WorkflowPresetService {
 
   getDefaultPresets() {
     const defaultPresets = Array.from(this.presets.values())
-      .filter(preset => preset.category === 'default');
+      .filter(preset => preset.tags.includes('default'));
     return from(Promise.resolve(defaultPresets));
   }
 
   getUserPresets() {
     const userPresets = Array.from(this.presets.values())
-      .filter(preset => preset.category === 'user');
+      .filter(preset => preset.tags.includes('user'));
     return from(Promise.resolve(userPresets));
+  }
+
+  getPresetsByCategory(category) {
+    const filteredPresets = Array.from(this.presets.values())
+      .filter(preset => preset.category === category);
+    return from(Promise.resolve(filteredPresets));
+  }
+
+  getPresetsByType(type) {
+    const filteredPresets = Array.from(this.presets.values())
+      .filter(preset => preset.type === type);
+    return from(Promise.resolve(filteredPresets));
+  }
+
+  getPresetsByTag(tag) {
+    const filteredPresets = Array.from(this.presets.values())
+      .filter(preset => preset.tags.includes(tag));
+    return from(Promise.resolve(filteredPresets));
+  }
+
+  getAllCategories() {
+    const categories = new Set();
+    Array.from(this.presets.values()).forEach(preset => {
+      categories.add(preset.category);
+    });
+    return from(Promise.resolve(Array.from(categories)));
+  }
+
+  getAllTypes() {
+    const types = new Set();
+    Array.from(this.presets.values()).forEach(preset => {
+      types.add(preset.type);
+    });
+    return from(Promise.resolve(Array.from(types)));
+  }
+
+  getAllTags() {
+    const tags = new Set();
+    Array.from(this.presets.values()).forEach(preset => {
+      preset.tags.forEach(tag => {
+        // Skip 'default' and 'user' tags as they're used for grouping
+        if (tag !== 'default' && tag !== 'user') {
+          tags.add(tag);
+        }
+      });
+    });
+    return from(Promise.resolve(Array.from(tags)));
   }
 }
 

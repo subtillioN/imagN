@@ -86,6 +86,30 @@ Update the vector embeddings for files and concepts.
 npm run context:update-vectors
 ```
 
+### Update Context
+
+Process new issues from the testing department log, update appropriate task lists and documentation, and refresh vector embeddings.
+
+```bash
+npm run context:update
+```
+
+This command:
+1. Reads issues from `context/new-issues-log.md`
+2. Categorizes issues as bugs or enhancements
+3. Adds bugs to `buglog.md`
+4. Adds enhancements to `progress-tracking.md`
+5. Marks processed issues as completed in the issues log
+6. Reads feature requests from `context/new-features-log.md`
+7. Adds feature requests to the appropriate sections in `progress-tracking.md`
+8. Marks processed feature requests as completed in the features log
+9. Updates vector embeddings for all changed files
+
+Example:
+```bash
+npm run context:update
+```
+
 ## Integration with Cursor
 
 The context management system integrates with Cursor editor through the `.cursor/rules/` directory. The following scripts are available:
@@ -93,6 +117,7 @@ The context management system integrates with Cursor editor through the `.cursor
 - **context-loader.js**: Script for loading context profiles
 - **context-saver.js**: Script for saving current context to a profile
 - **vector-generator.js**: Script for generating vector embeddings
+- **context-updater.js**: Script for processing new issues and updating documentation
 
 ## Usage Examples
 

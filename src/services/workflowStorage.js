@@ -11,7 +11,10 @@ export class WorkflowStorageService {
       id: workflow.id || `workflow-${Date.now()}`,
       name: workflow.name || 'Untitled Workflow',
       description: workflow.description || '',
-      category: 'user',
+      category: workflow.category || 'user',
+      type: workflow.type || 'custom',
+      tags: workflow.tags || ['user'],
+      categories: workflow.categories || ['user'],
       nodes: workflow.nodes.map(node => ({
         ...node,
         position: {
@@ -34,26 +37,26 @@ export class WorkflowStorageService {
   }
 
   saveWorkflow(workflow) {
-    return from(Promise.resolve()).pipe(
-      map(() => {
-        const serialized = this.serializeWorkflow(workflow);
-        const workflows = this.getAllWorkflows();
-        const existingIndex = workflows.findIndex(w => w.id === serialized.id);
+    // Ensure workflow has required fields
+    const workflowToSave = {
+      ...workflow,
+      id: workflow.id || this.generateId(),
+      name: workflow.name || 'Untitled Workflow',
+      description: workflow.description || '',
+      category: workflow.category || 'user',
+      type: workflow.type || 'custom',
+      tags: workflow.tags || ['user'],
+      categories: workflow.categories || ['user'],
+    };
 
-        if (existingIndex >= 0) {
-          workflows[existingIndex] = serialized;
-        } else {
-          workflows.push(serialized);
-        }
-
-        localStorage.setItem(this.storageKey, JSON.stringify(workflows));
-        return serialized;
-      }),
-      catchError(error => {
-        console.error('Error saving workflow:', error);
-        throw error;
-      })
-    );
+    // Save to localStorage
+    const workflows = this.getAllWorkflows();
+    workflows.push(workflowToSave);
+    localStorage.setItem(this.storageKey, JSON.stringify(workflows));
+    
+    // Notify subscribers
+    this.workflowsSubject.next(workflows);
+    return workflowToSave;
   }
 
   loadWorkflow(id) {
@@ -76,7 +79,52 @@ export class WorkflowStorageService {
   getAllWorkflows() {
     try {
       const data = localStorage.getItem(this.storageKey);
-      return data ? JSON.parse(data) : [];
+      const workflows = data ? JSON.parse(data) : [];
+      
+      // Migrate workflows to the new structure
+      return workflows.map(workflow => {
+        let updated = { ...workflow };
+        
+        // Handle legacy workflows with category string
+        if (workflow.category && !workflow.categories) {
+          updated = {
+            ...updated,
+            categories: [workflow.category, 'user']
+          };
+        }
+        
+        // Ensure categories is an array and includes 'user'
+        if (!workflow.categories) {
+          updated = {
+            ...updated,
+            categories: ['user']
+          };
+        }
+        
+        // Make sure 'user' is in the categories array
+        if (!workflow.categories.includes('user')) {
+          updated = {
+            ...updated,
+            categories: [...workflow.categories, 'user']
+          };
+        }
+        
+        // Add new fields if they don't exist
+        if (!updated.category) {
+          updated.category = 'user';
+        }
+        
+        if (!updated.type) {
+          updated.type = 'custom';
+        }
+        
+        if (!updated.tags) {
+          // Convert categories to tags, ensuring 'user' is included
+          updated.tags = Array.from(new Set([...updated.categories]));
+        }
+        
+        return updated;
+      });
     } catch (error) {
       console.error('Error getting workflows:', error);
       return [];
@@ -96,5 +144,61 @@ export class WorkflowStorageService {
         throw error;
       })
     );
+  }
+
+  migrateWorkflows() {
+    try {
+      const workflows = JSON.parse(localStorage.getItem('userWorkflows') || '[]');
+      const migratedWorkflows = workflows.map(workflow => {
+        // Ensure all workflows have the 'user' category in their categories array
+        let updated = { ...workflow };
+        
+        // Handle old format with single category
+        if (workflow.category && !workflow.categories) {
+          updated = {
+            ...updated,
+            categories: [workflow.category, 'user']
+          };
+        }
+        
+        // Ensure categories is an array and includes 'user'
+        if (!workflow.categories) {
+          updated = {
+            ...updated,
+            categories: ['user']
+          };
+        }
+        
+        // Make sure 'user' is in the categories array
+        if (!workflow.categories.includes('user')) {
+          updated = {
+            ...updated,
+            categories: [...workflow.categories, 'user']
+          };
+        }
+        
+        // Add new fields if they don't exist
+        if (!workflow.category) {
+          updated.category = 'user';
+        }
+        
+        if (!workflow.type) {
+          updated.type = 'custom';
+        }
+        
+        if (!workflow.tags) {
+          // Convert categories to tags, ensuring 'user' is included
+          updated.tags = Array.from(new Set([...updated.categories]));
+        }
+        
+        return updated;
+      });
+      
+      localStorage.setItem('userWorkflows', JSON.stringify(migratedWorkflows));
+      return migratedWorkflows;
+    } catch (error) {
+      console.error('Error migrating workflows:', error);
+      return [];
+    }
   }
 }

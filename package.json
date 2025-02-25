@@ -19,6 +19,7 @@
     "context:load": "node .cursor/scripts/context-loader.js",
     "context:save": "node .cursor/scripts/context-saver.js",
     "context:update-vectors": "node .cursor/scripts/vector-generator.js",
+    "context:update": "node .cursor/scripts/context-updater.js",
     "context:list": "node -e \"const fs=require('fs');const path=require('path');const emb=JSON.parse(fs.readFileSync(path.resolve(__dirname, 'context/vector-embeddings.json')));console.log('Available contexts:\\n' + Object.entries(emb.contexts).map(([k,v]) => `- ${k}: ${v.name} - ${v.description}`).join('\\n'))\""
   },
   "jest": {

@@ -37,7 +37,8 @@ import {
   ListItemButton,
   ListItemAvatar,
   Avatar,
-  ListItemIcon
+  ListItemIcon,
+  Chip
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -49,7 +50,8 @@ import {
   FolderOpen as FolderOpenIcon,
   Image as ImageIcon,
   Videocam as VideocamIcon,
-  AccountTree as AccountTreeIcon
+  AccountTree as AccountTreeIcon,
+  AddCircleOutline as AddCircleOutlineIcon
 } from '@mui/icons-material';
 import DevToolsButton from './DevToolsButton';
 import ThemeToggleButton from './ThemeToggleButton';
@@ -74,7 +76,10 @@ interface WorkflowPreset {
   id: string;
   name: string;
   description: string;
-  category: string;
+  category: string;       // Primary category (e.g., 'image', 'video', 'node')
+  type: string;           // Type of preset (e.g., 'generation', 'editing', 'custom')
+  tags: string[];         // Additional tags for filtering
+  categories?: string[];  // Kept for backward compatibility
 }
 
 // Define interfaces for the services
@@ -82,8 +87,11 @@ interface PresetType {
   id: string;
   name: string;
   description: string;
-  category: string;
-  [key: string]: any; // Allow for additional properties
+  category: string;       // Primary category (e.g., 'image', 'video', 'node')
+  type: string;           // Type of preset (e.g., 'generation', 'editing', 'custom')
+  tags: string[];         // Additional tags for filtering
+  categories?: string[];  // Kept for backward compatibility
+  [key: string]: any;     // Allow for additional properties
 }
 
 interface MainViewProps {
@@ -132,6 +140,13 @@ interface MainViewState {
   // Workflow presets
   systemPresets: WorkflowPreset[];
   userPresets: WorkflowPreset[];
+  // Category, Type, and Tag filtering
+  availableCategories: string[];
+  availableTypes: string[];
+  availableTags: string[];
+  selectedCategories: string[];
+  selectedTypes: string[];
+  selectedTags: string[];
 }
 
 export class MainView extends Component<MainViewProps, MainViewState> {
@@ -189,7 +204,14 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       },
       // Workflow presets
       systemPresets: [],
-      userPresets: []
+      userPresets: [],
+      // Category, Type, and Tag filtering
+      availableCategories: [],
+      availableTypes: [],
+      availableTags: [],
+      selectedCategories: [],
+      selectedTypes: [],
+      selectedTags: []
     };
     this.initializeStreams();
 
@@ -250,17 +272,25 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     // Load all presets
     workflowPresetService.getAllPresets().subscribe((presets: PresetType[]) => {
       const systemPresets = presets
-        .filter((preset: PresetType) => preset.category === 'default')
+        .filter((preset: PresetType) => preset.categories.includes('default'))
         .map((preset: PresetType) => ({
           id: preset.id,
           name: preset.name,
           description: preset.description,
-          category: preset.category
+          category: preset.category,
+          type: preset.type,
+          tags: preset.tags,
+          categories: preset.categories || []
         }));
       
       this.setState({
-        systemPresets: systemPresets
+        systemPresets: systemPresets,
+        // Set a default preset when presets are loaded
+        newProjectPreset: systemPresets.length > 0 ? systemPresets[0].id : ''
       });
+      
+      // Get all unique categories, types, and tags
+      this.updateAvailableFilters(systemPresets, this.state.userPresets);
     });
     
     // Load user-defined presets
@@ -269,12 +299,18 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       id: workflow.id,
       name: workflow.name,
       description: workflow.description || 'User-defined workflow',
-      category: workflow.category || 'user'
+      category: workflow.category || 'user',
+      type: workflow.type || 'custom',
+      tags: workflow.tags || [],
+      categories: workflow.categories || ['user']
     }));
     
     this.setState({
       userPresets: userWorkflowPresets
     });
+    
+    // Get all unique categories, types, and tags
+    this.updateAvailableFilters(this.state.systemPresets, userWorkflowPresets);
   }
 
   componentDidUpdate(prevProps: MainViewProps, prevState: MainViewState) {
@@ -463,17 +499,27 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       newProjectDialogOpen, 
       newProjectName, 
       newProjectPreset,
-      newProjectDescription,
-      errors,
+      newProjectDescription, 
+      errors, 
       formTouched,
       systemPresets,
-      userPresets
+      userPresets,
+      availableCategories,
+      availableTypes,
+      availableTags,
+      selectedCategories,
+      selectedTypes,
+      selectedTags
     } = this.state;
 
+    // If no presets are available, don't render the dialog yet
+    if (systemPresets.length === 0) {
+      return null;
+    }
+    
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       
-      // Update the state immediately without validation
       this.setState({ 
         newProjectName: value,
         formTouched: { ...formTouched, projectName: true }
@@ -492,14 +538,101 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         formTouched: { ...formTouched, projectPreset: true },
         errors: { ...errors, ...newErrors }
       });
+      
+      // Log the selected preset for debugging
+      console.log('Selected preset:', value);
     };
+    
+    const handleCategoryToggle = (category: string) => {
+      this.setState(prevState => {
+        const currentSelectedCategories = [...prevState.selectedCategories];
+        const categoryIndex = currentSelectedCategories.indexOf(category);
+        
+        if (categoryIndex === -1) {
+          // Add the category
+          currentSelectedCategories.push(category);
+        } else {
+          // Remove the category
+          currentSelectedCategories.splice(categoryIndex, 1);
+        }
+        
+        return { selectedCategories: currentSelectedCategories };
+      });
+    };
+    
+    const handleTypeToggle = (type: string) => {
+      this.setState(prevState => {
+        const currentSelectedTypes = [...prevState.selectedTypes];
+        const typeIndex = currentSelectedTypes.indexOf(type);
+        
+        if (typeIndex === -1) {
+          // Add the type
+          currentSelectedTypes.push(type);
+        } else {
+          // Remove the type
+          currentSelectedTypes.splice(typeIndex, 1);
+        }
+        
+        return { selectedTypes: currentSelectedTypes };
+      });
+    };
+    
+    const handleTagToggle = (tag: string) => {
+      this.setState(prevState => {
+        const currentSelectedTags = [...prevState.selectedTags];
+        const tagIndex = currentSelectedTags.indexOf(tag);
+        
+        if (tagIndex === -1) {
+          // Add the tag
+          currentSelectedTags.push(tag);
+        } else {
+          // Remove the tag
+          currentSelectedTags.splice(tagIndex, 1);
+        }
+        
+        return { selectedTags: currentSelectedTags };
+      });
+    };
+    
+    // Filter presets based on selected categories, types, and tags
+    const filterPresets = (presets: WorkflowPreset[]) => {
+      // Start with all presets
+      let filteredPresets = [...presets];
+      
+      // Filter by category if any selected
+      if (selectedCategories.length > 0) {
+        filteredPresets = filteredPresets.filter(preset => 
+          selectedCategories.includes(preset.category)
+        );
+      }
+      
+      // Filter by type if any selected
+      if (selectedTypes.length > 0) {
+        filteredPresets = filteredPresets.filter(preset => 
+          selectedTypes.includes(preset.type)
+        );
+      }
+      
+      // Filter by tags if any selected
+      if (selectedTags.length > 0) {
+        filteredPresets = filteredPresets.filter(preset => 
+          selectedTags.some(tag => preset.tags.includes(tag))
+        );
+      }
+      
+      return filteredPresets;
+    };
+    
+    // Apply filtering
+    const filteredSystemPresets = filterPresets(systemPresets);
+    const filteredUserPresets = filterPresets(userPresets);
     
     // Combine all presets for the dropdown
     const allPresets = [
-      ...(systemPresets.map(preset => ({...preset, isSystem: true}))),
-      ...(userPresets.map(preset => ({...preset, isSystem: false})))
+      ...(filteredSystemPresets.map(preset => ({...preset, isSystem: true}))),
+      ...(filteredUserPresets.map(preset => ({...preset, isSystem: false})))
     ];
-    
+
     return (
       <Dialog 
         open={newProjectDialogOpen} 
@@ -516,107 +649,221 @@ export class MainView extends Component<MainViewProps, MainViewState> {
           pb: 2
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <AddIcon sx={{ mr: 1 }} />
+            <AddCircleOutlineIcon sx={{ mr: 1 }} />
             Create New Project
           </Box>
-          <IconButton onClick={this.handleNewProjectDialogClose} size="small">
+          <IconButton 
+            aria-label="close" 
+            onClick={this.handleNewProjectDialogClose}
+            size="small"
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        
-        <DialogContent sx={{ pt: 3 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                label="Project Name"
-                fullWidth
-                variant="outlined"
-                value={newProjectName}
-                onChange={handleNameChange}
-                onBlur={() => this.setState({ formTouched: { ...formTouched, projectName: true } })}
-                placeholder="Enter a name for your project"
-                autoFocus
-                required
-                error={formTouched.projectName && Boolean(errors.projectName)}
-                helperText={formTouched.projectName && errors.projectName}
-                inputRef={this.projectNameInputRef}
-              />
-            </Grid>
+        <DialogContent sx={{ mt: 2 }}>
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              fullWidth
+              label="Project Name"
+              variant="outlined"
+              value={newProjectName}
+              onChange={handleNameChange}
+              onBlur={() => this.setState({ formTouched: { ...formTouched, projectName: true } })}
+              error={formTouched.projectName && Boolean(errors.projectName)}
+              helperText={formTouched.projectName && errors.projectName}
+              margin="normal"
+              autoFocus
+            />
+          </Box>
+          
+          {/* Filter section */}
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Filter Presets
+            </Typography>
             
-            <Grid item xs={12}>
-              <FormControl 
-                fullWidth 
-                required 
-                error={formTouched.projectPreset && Boolean(errors.projectPreset)}
+            {/* Categories */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Categories:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {availableCategories.map(category => (
+                  <Chip
+                    key={category}
+                    label={category}
+                    onClick={() => handleCategoryToggle(category)}
+                    color={selectedCategories.includes(category) ? "primary" : "default"}
+                    variant={selectedCategories.includes(category) ? "filled" : "outlined"}
+                    sx={{ textTransform: 'capitalize' }}
+                  />
+                ))}
+              </Box>
+            </Box>
+            
+            {/* Types */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Types:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {availableTypes.map(type => (
+                  <Chip
+                    key={type}
+                    label={type}
+                    onClick={() => handleTypeToggle(type)}
+                    color={selectedTypes.includes(type) ? "secondary" : "default"}
+                    variant={selectedTypes.includes(type) ? "filled" : "outlined"}
+                    sx={{ textTransform: 'capitalize' }}
+                  />
+                ))}
+              </Box>
+            </Box>
+            
+            {/* Tags */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Tags:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {availableTags.map(tag => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    onClick={() => handleTagToggle(tag)}
+                    color={selectedTags.includes(tag) ? "success" : "default"}
+                    variant={selectedTags.includes(tag) ? "filled" : "outlined"}
+                    sx={{ textTransform: 'capitalize' }}
+                  />
+                ))}
+              </Box>
+            </Box>
+          </Box>
+          
+          <Box sx={{ mb: 2 }}>
+            <FormControl 
+              fullWidth 
+              variant="outlined"
+              margin="normal"
+              error={formTouched.projectPreset && Boolean(errors.projectPreset)}
+            >
+              <InputLabel id="project-preset-label">Workflow Preset</InputLabel>
+              <Select
+                labelId="project-preset-label"
+                value={newProjectPreset}
+                label="Workflow Preset"
+                onChange={handlePresetChange}
+                onBlur={() => this.setState({ formTouched: { ...formTouched, projectPreset: true } })}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300
+                    }
+                  }
+                }}
               >
-                <InputLabel id="project-preset-label">Preset</InputLabel>
-                <Select
-                  labelId="project-preset-label"
-                  value={newProjectPreset}
-                  label="Preset"
-                  onChange={handlePresetChange}
-                  onBlur={() => this.setState({ formTouched: { ...formTouched, projectPreset: true } })}
-                >
-                  {/* System presets */}
-                  {systemPresets.length > 0 && (
-                    <>
-                      <ListSubheader sx={{ bgcolor: 'background.paper', fontWeight: 'bold' }}>
-                        System Presets
-                      </ListSubheader>
-                      {systemPresets.map(preset => (
-                        <MenuItem key={preset.id} value={preset.id}>
+                {/* System presets */}
+                {filteredSystemPresets.length > 0 && (
+                  <>
+                    <ListSubheader sx={{ bgcolor: 'background.paper', fontWeight: 'bold' }}>
+                      System Presets
+                    </ListSubheader>
+                    {filteredSystemPresets.map(preset => (
+                      <MenuItem key={preset.id} value={preset.id}>
+                        <Box>
                           {preset.name}
-                        </MenuItem>
-                      ))}
-                    </>
-                  )}
-                  
-                  {/* User-defined presets */}
-                  {userPresets.length > 0 && (
-                    <>
-                      <Divider sx={{ my: 1 }} />
-                      <ListSubheader sx={{ bgcolor: 'background.paper', fontWeight: 'bold' }}>
-                        User-Defined Presets
-                      </ListSubheader>
-                      {userPresets.map(preset => (
-                        <MenuItem key={preset.id} value={preset.id}>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                            {preset.tags
+                              .filter(tag => tag !== 'default' && tag !== 'user')
+                              .map(tag => (
+                                <Chip
+                                  key={tag}
+                                  label={tag}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ 
+                                    height: 20, 
+                                    fontSize: '0.7rem',
+                                    textTransform: 'capitalize'
+                                  }}
+                                />
+                              ))}
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </>
+                )}
+                
+                {/* User-defined presets */}
+                {filteredUserPresets.length > 0 && (
+                  <>
+                    <Divider sx={{ my: 1 }} />
+                    <ListSubheader sx={{ bgcolor: 'background.paper', fontWeight: 'bold' }}>
+                      User-Defined Presets
+                    </ListSubheader>
+                    {filteredUserPresets.map(preset => (
+                      <MenuItem key={preset.id} value={preset.id}>
+                        <Box>
                           {preset.name}
-                        </MenuItem>
-                      ))}
-                    </>
-                  )}
-                </Select>
-                <FormHelperText>
-                  {formTouched.projectPreset && errors.projectPreset ?
-                    errors.projectPreset :
-                    'Select a preset for your project'}
-                </FormHelperText>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                label="Description (Optional)"
-                fullWidth
-                variant="outlined"
-                value={newProjectDescription}
-                onChange={(e) => this.setState({ newProjectDescription: e.target.value })}
-                placeholder="Briefly describe your project"
-                multiline
-                rows={3}
-              />
-            </Grid>
-          </Grid>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                            {preset.tags
+                              .filter(tag => tag !== 'default' && tag !== 'user')
+                              .map(tag => (
+                                <Chip
+                                  key={tag}
+                                  label={tag}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ 
+                                    height: 20, 
+                                    fontSize: '0.7rem',
+                                    textTransform: 'capitalize'
+                                  }}
+                                />
+                              ))}
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </>
+                )}
+                
+                {/* Show message when no presets match the filter */}
+                {filteredSystemPresets.length === 0 && filteredUserPresets.length === 0 && (
+                  <MenuItem disabled>
+                    No presets match the selected categories
+                  </MenuItem>
+                )}
+              </Select>
+              <FormHelperText>
+                {formTouched.projectPreset && errors.projectPreset ?
+                  errors.projectPreset : 'Select a workflow preset for your project'}
+              </FormHelperText>
+            </FormControl>
+          </Box>
+          
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              label="Description (Optional)"
+              fullWidth
+              variant="outlined"
+              value={newProjectDescription}
+              onChange={(e) => this.setState({ newProjectDescription: e.target.value })}
+              multiline
+              rows={3}
+            />
+          </Box>
         </DialogContent>
         
         <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}>
           <Button onClick={this.handleNewProjectDialogClose}>Cancel</Button>
           <Button 
             variant="contained" 
-            color="primary"
             onClick={this.handleNewProjectCreate}
+            disabled={!newProjectName || !newProjectPreset}
           >
-            Create Project
+            Create
           </Button>
         </DialogActions>
       </Dialog>
@@ -1115,9 +1362,9 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       
       if (preset) {
         // Determine tab based on preset name or other properties
-        if (preset.name.toLowerCase().includes('video')) {
+        if (preset.category === 'video') {
           targetTab = 1; // Video Workspace
-        } else if (preset.name.toLowerCase().includes('node')) {
+        } else if (preset.category === 'node') {
           targetTab = 2; // Node Editor
         }
       }
@@ -1311,5 +1558,60 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         </Typography>
       </MenuItem>
     );
+  }
+
+  // Helper method to update available categories, types, and tags
+  updateAvailableFilters(systemPresets: WorkflowPreset[], userPresets: WorkflowPreset[]) {
+    const categories = new Set<string>();
+    const types = new Set<string>();
+    const tags = new Set<string>();
+    
+    // Process system presets
+    systemPresets.forEach(preset => {
+      // Add category
+      if (preset.category && preset.category !== 'default' && preset.category !== 'user') {
+        categories.add(preset.category);
+      }
+      
+      // Add type
+      if (preset.type) {
+        types.add(preset.type);
+      }
+      
+      // Add tags
+      preset.tags.forEach(tag => {
+        // Skip 'default' and 'user' tags as they're used for grouping
+        if (tag !== 'default' && tag !== 'user') {
+          tags.add(tag);
+        }
+      });
+    });
+    
+    // Process user presets
+    userPresets.forEach(preset => {
+      // Add category
+      if (preset.category && preset.category !== 'default' && preset.category !== 'user') {
+        categories.add(preset.category);
+      }
+      
+      // Add type
+      if (preset.type) {
+        types.add(preset.type);
+      }
+      
+      // Add tags
+      preset.tags.forEach(tag => {
+        // Skip 'default' and 'user' tags as they're used for grouping
+        if (tag !== 'default' && tag !== 'user') {
+          tags.add(tag);
+        }
+      });
+    });
+    
+    this.setState({
+      availableCategories: Array.from(categories).sort(),
+      availableTypes: Array.from(types).sort(),
+      availableTags: Array.from(tags).sort()
+    });
   }
 } 
