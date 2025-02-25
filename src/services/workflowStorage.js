@@ -13,8 +13,7 @@ export class WorkflowStorageService {
       description: workflow.description || '',
       category: workflow.category || 'user',
       type: workflow.type || 'custom',
-      tags: workflow.tags || ['user'],
-      categories: workflow.categories || ['user'],
+      tags: this.ensureWorkflowTags(workflow),
       nodes: workflow.nodes.map(node => ({
         ...node,
         position: {
@@ -36,6 +35,25 @@ export class WorkflowStorageService {
     };
   }
 
+  ensureWorkflowTags(workflow) {
+    const tags = Array.isArray(workflow.tags) ? [...workflow.tags] : [];
+    
+    if (!tags.includes('user')) {
+      tags.push('user');
+    }
+    
+    if (workflow.category && !tags.includes(workflow.category) && 
+        workflow.category !== 'user' && workflow.category !== 'default') {
+      tags.push(workflow.category);
+    }
+    
+    if (workflow.type && !tags.includes(workflow.type)) {
+      tags.push(workflow.type);
+    }
+    
+    return tags;
+  }
+
   saveWorkflow(workflow) {
     // Ensure workflow has required fields
     const workflowToSave = {
@@ -45,8 +63,7 @@ export class WorkflowStorageService {
       description: workflow.description || '',
       category: workflow.category || 'user',
       type: workflow.type || 'custom',
-      tags: workflow.tags || ['user'],
-      categories: workflow.categories || ['user'],
+      tags: this.ensureWorkflowTags(workflow),
     };
 
     // Save to localStorage
@@ -57,6 +74,40 @@ export class WorkflowStorageService {
     // Notify subscribers
     this.workflowsSubject.next(workflows);
     return workflowToSave;
+  }
+
+  updateWorkflow(workflow) {
+    // Ensure workflow has required fields
+    const workflowToUpdate = {
+      ...workflow,
+      name: workflow.name || 'Untitled Workflow',
+      description: workflow.description || '',
+      category: workflow.category || 'user',
+      type: workflow.type || 'custom',
+      tags: this.ensureWorkflowTags(workflow),
+    };
+
+    // Get all workflows
+    const workflows = this.getAllWorkflows();
+    
+    // Find the workflow to update
+    const index = workflows.findIndex(w => w.id === workflowToUpdate.id);
+    
+    if (index !== -1) {
+      // Update the workflow
+      workflows[index] = workflowToUpdate;
+      
+      // Save to localStorage
+      localStorage.setItem(this.storageKey, JSON.stringify(workflows));
+      
+      // Notify subscribers
+      this.workflowsSubject.next(workflows);
+      
+      return workflowToUpdate;
+    }
+    
+    // If workflow not found, save as new
+    return this.saveWorkflow(workflow);
   }
 
   loadWorkflow(id) {

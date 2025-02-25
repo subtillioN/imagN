@@ -51,7 +51,9 @@ import {
   Image as ImageIcon,
   Videocam as VideocamIcon,
   AccountTree as AccountTreeIcon,
-  AddCircleOutline as AddCircleOutlineIcon
+  AddCircleOutline as AddCircleOutlineIcon,
+  Search as SearchIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import DevToolsButton from './DevToolsButton';
 import ThemeToggleButton from './ThemeToggleButton';
@@ -76,10 +78,10 @@ interface WorkflowPreset {
   id: string;
   name: string;
   description: string;
-  category: string;       // Primary category (e.g., 'image', 'video', 'node')
-  type: string;           // Type of preset (e.g., 'generation', 'editing', 'custom')
-  tags: string[];         // Additional tags for filtering
-  categories?: string[];  // Kept for backward compatibility
+  tags: string[];
+  // Keep these for backward compatibility
+  category?: string;
+  type?: string;
 }
 
 // Define interfaces for the services
@@ -87,11 +89,11 @@ interface PresetType {
   id: string;
   name: string;
   description: string;
-  category: string;       // Primary category (e.g., 'image', 'video', 'node')
-  type: string;           // Type of preset (e.g., 'generation', 'editing', 'custom')
-  tags: string[];         // Additional tags for filtering
-  categories?: string[];  // Kept for backward compatibility
-  [key: string]: any;     // Allow for additional properties
+  tags: string[];
+  // Keep these for backward compatibility
+  category?: string;
+  type?: string;
+  [key: string]: any;   // Allow for additional properties
 }
 
 interface MainViewProps {
@@ -147,6 +149,11 @@ interface MainViewState {
   selectedCategories: string[];
   selectedTypes: string[];
   selectedTags: string[];
+  tagSearchQuery: string;
+  // Tag management
+  tagManagementDialogOpen: boolean;
+  editingPresetId: string | null;
+  newTag: string;
 }
 
 export class MainView extends Component<MainViewProps, MainViewState> {
@@ -211,7 +218,12 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       availableTags: [],
       selectedCategories: [],
       selectedTypes: [],
-      selectedTags: []
+      selectedTags: [],
+      tagSearchQuery: '',
+      // Tag management
+      tagManagementDialogOpen: false,
+      editingPresetId: null,
+      newTag: ''
     };
     this.initializeStreams();
 
@@ -230,6 +242,12 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     this.handleSaveProject = this.handleSaveProject.bind(this);
     this.handleCloseSnackbar = this.handleCloseSnackbar.bind(this);
     this.handleDeleteProject = this.handleDeleteProject.bind(this);
+    // Bind tag management methods
+    this.handleOpenTagManagement = this.handleOpenTagManagement.bind(this);
+    this.handleCloseTagManagement = this.handleCloseTagManagement.bind(this);
+    this.handleNewTagChange = this.handleNewTagChange.bind(this);
+    this.handleAddTag = this.handleAddTag.bind(this);
+    this.handleRemoveTag = this.handleRemoveTag.bind(this);
     
     // Initialize the debounced function
     this.debouncedValidateProjectName = debounce((value: string) => {
@@ -272,15 +290,17 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     // Load all presets
     workflowPresetService.getAllPresets().subscribe((presets: PresetType[]) => {
       const systemPresets = presets
-        .filter((preset: PresetType) => preset.categories.includes('default'))
+        .filter((preset: PresetType) => 
+          // A preset is a system preset if it has the 'default' tag
+          preset.tags && Array.isArray(preset.tags) && preset.tags.includes('default')
+        )
         .map((preset: PresetType) => ({
           id: preset.id,
           name: preset.name,
           description: preset.description,
+          tags: preset.tags || [],
           category: preset.category,
-          type: preset.type,
-          tags: preset.tags,
-          categories: preset.categories || []
+          type: preset.type
         }));
       
       this.setState({
@@ -289,7 +309,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         newProjectPreset: systemPresets.length > 0 ? systemPresets[0].id : ''
       });
       
-      // Get all unique categories, types, and tags
+      // Get all unique tags for filtering
       this.updateAvailableFilters(systemPresets, this.state.userPresets);
     });
     
@@ -509,7 +529,8 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       availableTags,
       selectedCategories,
       selectedTypes,
-      selectedTags
+      selectedTags,
+      tagSearchQuery
     } = this.state;
 
     // If no presets are available, don't render the dialog yet
@@ -594,6 +615,15 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       });
     };
     
+    const handleTagSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+      this.setState({ tagSearchQuery: event.target.value });
+    };
+    
+    // Filter tags based on search query
+    const filteredTags = availableTags.filter(tag => 
+      tag.toLowerCase().includes(tagSearchQuery.toLowerCase())
+    );
+    
     // Filter presets based on selected categories, types, and tags
     const filterPresets = (presets: WorkflowPreset[]) => {
       // Start with all presets
@@ -602,21 +632,23 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       // Filter by category if any selected
       if (selectedCategories.length > 0) {
         filteredPresets = filteredPresets.filter(preset => 
-          selectedCategories.includes(preset.category)
+          preset.tags && Array.isArray(preset.tags) && 
+          selectedCategories.some(category => preset.tags.includes(category))
         );
       }
       
       // Filter by type if any selected
       if (selectedTypes.length > 0) {
         filteredPresets = filteredPresets.filter(preset => 
-          selectedTypes.includes(preset.type)
+          preset.tags && Array.isArray(preset.tags) && 
+          selectedTypes.some(type => preset.tags.includes(type))
         );
       }
       
       // Filter by tags if any selected
       if (selectedTags.length > 0) {
         filteredPresets = filteredPresets.filter(preset => 
-          selectedTags.some(tag => preset.tags.includes(tag))
+          preset.tags && Array.isArray(preset.tags) && selectedTags.some(tag => preset.tags.includes(tag))
         );
       }
       
@@ -682,6 +714,27 @@ export class MainView extends Component<MainViewProps, MainViewState> {
               Filter Presets
             </Typography>
             
+            {/* Search field */}
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                fullWidth
+                label="Search Tags"
+                variant="outlined"
+                size="small"
+                value={tagSearchQuery}
+                onChange={handleTagSearch}
+                InputProps={{
+                  startAdornment: (
+                    <Box sx={{ color: 'text.secondary', mr: 1 }}>
+                      <SearchIcon fontSize="small" />
+                    </Box>
+                  ),
+                }}
+                placeholder="Type to search tags..."
+                sx={{ mb: 1 }}
+              />
+            </Box>
+            
             {/* Categories */}
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -726,7 +779,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                 Tags:
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {availableTags.map(tag => (
+                {filteredTags.map(tag => (
                   <Chip
                     key={tag}
                     label={tag}
@@ -736,6 +789,11 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                     sx={{ textTransform: 'capitalize' }}
                   />
                 ))}
+                {filteredTags.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    No tags match your search
+                  </Typography>
+                )}
               </Box>
             </Box>
           </Box>
@@ -773,7 +831,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                         <Box>
                           {preset.name}
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                            {preset.tags
+                            {preset.tags && Array.isArray(preset.tags) && preset.tags
                               .filter(tag => tag !== 'default' && tag !== 'user')
                               .map(tag => (
                                 <Chip
@@ -804,25 +862,43 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                     </ListSubheader>
                     {filteredUserPresets.map(preset => (
                       <MenuItem key={preset.id} value={preset.id}>
-                        <Box>
-                          {preset.name}
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                            {preset.tags
-                              .filter(tag => tag !== 'default' && tag !== 'user')
-                              .map(tag => (
-                                <Chip
-                                  key={tag}
-                                  label={tag}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{ 
-                                    height: 20, 
-                                    fontSize: '0.7rem',
-                                    textTransform: 'capitalize'
-                                  }}
-                                />
-                              ))}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          width: '100%'
+                        }}>
+                          <Box>
+                            {preset.name}
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                              {preset.tags && Array.isArray(preset.tags) && preset.tags
+                                .filter(tag => tag !== 'default' && tag !== 'user')
+                                .map(tag => (
+                                  <Chip
+                                    key={tag}
+                                    label={tag}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ 
+                                      height: 20, 
+                                      fontSize: '0.7rem',
+                                      textTransform: 'capitalize'
+                                    }}
+                                  />
+                                ))}
+                            </Box>
                           </Box>
+                          <IconButton 
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              this.handleOpenTagManagement(preset.id);
+                            }}
+                            sx={{ ml: 1 }}
+                            title="Manage Tags"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
                         </Box>
                       </MenuItem>
                     ))}
@@ -1261,6 +1337,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         {this.renderFooter()}
         {this.renderNewProjectDialog()}
         {this.renderLoadProjectDialog()}
+        {this.renderTagManagementDialog()}
         
         {/* Notification Snackbar */}
         <Snackbar 
@@ -1361,11 +1438,13 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       let targetTab = 0; // Default to Image Workspace
       
       if (preset) {
-        // Determine tab based on preset name or other properties
-        if (preset.category === 'video') {
-          targetTab = 1; // Video Workspace
-        } else if (preset.category === 'node') {
-          targetTab = 2; // Node Editor
+        // Determine tab based on preset tags
+        if (preset.tags && Array.isArray(preset.tags)) {
+          if (preset.tags.includes('video')) {
+            targetTab = 1; // Video Workspace
+          } else if (preset.tags.includes('node')) {
+            targetTab = 2; // Node Editor
+          }
         }
       }
       
@@ -1568,44 +1647,54 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     
     // Process system presets
     systemPresets.forEach(preset => {
-      // Add category
-      if (preset.category && preset.category !== 'default' && preset.category !== 'user') {
-        categories.add(preset.category);
+      // Add categories from tags
+      if (preset.tags && Array.isArray(preset.tags)) {
+        preset.tags.forEach(tag => {
+          // Skip 'default' and 'user' tags as they're used for grouping
+          if (tag !== 'default' && tag !== 'user') {
+            // Add to categories if it's a main category tag
+            if (['image', 'video', 'node'].includes(tag)) {
+              categories.add(tag);
+            }
+            
+            // Add to types if it's a type tag
+            if (['generation', 'editing', 'style', 'custom'].includes(tag)) {
+              types.add(tag);
+            }
+            
+            // All other tags go to the tags set
+            if (!['image', 'video', 'node', 'generation', 'editing', 'style', 'custom', 'default', 'user'].includes(tag)) {
+              tags.add(tag);
+            }
+          }
+        });
       }
-      
-      // Add type
-      if (preset.type) {
-        types.add(preset.type);
-      }
-      
-      // Add tags
-      preset.tags.forEach(tag => {
-        // Skip 'default' and 'user' tags as they're used for grouping
-        if (tag !== 'default' && tag !== 'user') {
-          tags.add(tag);
-        }
-      });
     });
     
     // Process user presets
     userPresets.forEach(preset => {
-      // Add category
-      if (preset.category && preset.category !== 'default' && preset.category !== 'user') {
-        categories.add(preset.category);
+      // Add categories from tags
+      if (preset.tags && Array.isArray(preset.tags)) {
+        preset.tags.forEach(tag => {
+          // Skip 'default' and 'user' tags as they're used for grouping
+          if (tag !== 'default' && tag !== 'user') {
+            // Add to categories if it's a main category tag
+            if (['image', 'video', 'node'].includes(tag)) {
+              categories.add(tag);
+            }
+            
+            // Add to types if it's a type tag
+            if (['generation', 'editing', 'style', 'custom'].includes(tag)) {
+              types.add(tag);
+            }
+            
+            // All other tags go to the tags set
+            if (!['image', 'video', 'node', 'generation', 'editing', 'style', 'custom', 'default', 'user'].includes(tag)) {
+              tags.add(tag);
+            }
+          }
+        });
       }
-      
-      // Add type
-      if (preset.type) {
-        types.add(preset.type);
-      }
-      
-      // Add tags
-      preset.tags.forEach(tag => {
-        // Skip 'default' and 'user' tags as they're used for grouping
-        if (tag !== 'default' && tag !== 'user') {
-          tags.add(tag);
-        }
-      });
     });
     
     this.setState({
@@ -1613,5 +1702,202 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       availableTypes: Array.from(types).sort(),
       availableTags: Array.from(tags).sort()
     });
+  }
+
+  // Tag management methods
+  handleOpenTagManagement(presetId: string) {
+    this.setState({
+      tagManagementDialogOpen: true,
+      editingPresetId: presetId,
+      newTag: ''
+    });
+  }
+  
+  handleCloseTagManagement() {
+    this.setState({
+      tagManagementDialogOpen: false,
+      editingPresetId: null,
+      newTag: ''
+    });
+  }
+  
+  handleNewTagChange(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ newTag: event.target.value });
+  }
+  
+  handleAddTag() {
+    const { editingPresetId, newTag, userPresets } = this.state;
+    
+    if (!editingPresetId || !newTag.trim()) return;
+    
+    // Find the preset being edited
+    const updatedPresets = userPresets.map(preset => {
+      if (preset.id === editingPresetId) {
+        // Check if tag already exists
+        if (preset.tags && Array.isArray(preset.tags) && preset.tags.includes(newTag.trim())) {
+          this.showNotification('Tag already exists', 'warning');
+          return preset;
+        }
+        
+        // Add the new tag
+        return {
+          ...preset,
+          tags: [...(preset.tags || []), newTag.trim()]
+        };
+      }
+      return preset;
+    });
+    
+    // Update state
+    this.setState({
+      userPresets: updatedPresets,
+      newTag: ''
+    });
+    
+    // Save the updated preset
+    this.saveUpdatedPreset(editingPresetId, updatedPresets);
+    
+    // Update available filters
+    this.updateAvailableFilters(this.state.systemPresets, updatedPresets);
+  }
+  
+  handleRemoveTag(tagToRemove: string) {
+    const { editingPresetId, userPresets } = this.state;
+    
+    if (!editingPresetId) return;
+    
+    // Find the preset being edited
+    const updatedPresets = userPresets.map(preset => {
+      if (preset.id === editingPresetId) {
+        // Remove the tag
+        return {
+          ...preset,
+          tags: preset.tags && Array.isArray(preset.tags) ? preset.tags.filter(tag => tag !== tagToRemove) : []
+        };
+      }
+      return preset;
+    });
+    
+    // Update state
+    this.setState({
+      userPresets: updatedPresets
+    });
+    
+    // Save the updated preset
+    this.saveUpdatedPreset(editingPresetId, updatedPresets);
+    
+    // Update available filters
+    this.updateAvailableFilters(this.state.systemPresets, updatedPresets);
+  }
+  
+  saveUpdatedPreset(presetId: string, updatedPresets: WorkflowPreset[]) {
+    // Find the updated preset
+    const updatedPreset = updatedPresets.find(preset => preset.id === presetId);
+    
+    if (!updatedPreset) return;
+    
+    // Save to storage
+    this.workflowStorage.updateWorkflow(updatedPreset);
+    
+    // Show notification
+    this.showNotification('Tags updated successfully', 'success');
+  }
+  
+  renderTagManagementDialog() {
+    const { tagManagementDialogOpen, editingPresetId, userPresets, newTag } = this.state;
+    
+    if (!editingPresetId) return null;
+    
+    // Find the preset being edited
+    const preset = userPresets.find(p => p.id === editingPresetId);
+    
+    if (!preset) return null;
+    
+    return (
+      <Dialog
+        open={tagManagementDialogOpen}
+        onClose={this.handleCloseTagManagement}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: 1,
+          borderColor: 'divider',
+          pb: 2
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            Manage Tags for "{preset.name}"
+          </Box>
+          <IconButton 
+            aria-label="close" 
+            onClick={this.handleCloseTagManagement}
+            size="small"
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Add or remove tags to better organize and filter your presets.
+          </Typography>
+          
+          {/* Current tags */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Current Tags:
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {preset.tags && Array.isArray(preset.tags) && preset.tags.map(tag => (
+                <Chip
+                  key={tag}
+                  label={tag}
+                  onDelete={() => this.handleRemoveTag(tag)}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ textTransform: 'capitalize' }}
+                />
+              ))}
+              {(!preset.tags || !Array.isArray(preset.tags) || preset.tags.length === 0) && (
+                <Typography variant="body2" color="text.secondary">
+                  No tags added yet
+                </Typography>
+              )}
+            </Box>
+          </Box>
+          
+          {/* Add new tag */}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <TextField
+              label="New Tag"
+              variant="outlined"
+              size="small"
+              value={newTag}
+              onChange={this.handleNewTagChange}
+              fullWidth
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  this.handleAddTag();
+                }
+              }}
+            />
+            <Button 
+              variant="contained" 
+              onClick={this.handleAddTag}
+              disabled={!newTag.trim()}
+            >
+              Add
+            </Button>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Button onClick={this.handleCloseTagManagement}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
   }
 } 

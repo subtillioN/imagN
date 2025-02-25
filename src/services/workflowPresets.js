@@ -219,13 +219,23 @@ class WorkflowPresetService {
 
   getPresetsByCategory(category) {
     const filteredPresets = Array.from(this.presets.values())
-      .filter(preset => preset.category === category);
+      .filter(preset => 
+        // Check if the category exists in tags
+        (preset.tags && preset.tags.includes(category)) ||
+        // Fallback to category property for backward compatibility
+        preset.category === category
+      );
     return from(Promise.resolve(filteredPresets));
   }
 
   getPresetsByType(type) {
     const filteredPresets = Array.from(this.presets.values())
-      .filter(preset => preset.type === type);
+      .filter(preset => 
+        // Check if the type exists in tags
+        (preset.tags && preset.tags.includes(type)) ||
+        // Fallback to type property for backward compatibility
+        preset.type === type
+      );
     return from(Promise.resolve(filteredPresets));
   }
 
@@ -238,7 +248,20 @@ class WorkflowPresetService {
   getAllCategories() {
     const categories = new Set();
     Array.from(this.presets.values()).forEach(preset => {
-      categories.add(preset.category);
+      // Add categories from tags
+      if (preset.tags && Array.isArray(preset.tags)) {
+        preset.tags.forEach(tag => {
+          // Add to categories if it's a main category tag
+          if (['image', 'video', 'node'].includes(tag)) {
+            categories.add(tag);
+          }
+        });
+      }
+      
+      // For backward compatibility
+      if (preset.category && !['default', 'user'].includes(preset.category)) {
+        categories.add(preset.category);
+      }
     });
     return from(Promise.resolve(Array.from(categories)));
   }
@@ -246,7 +269,20 @@ class WorkflowPresetService {
   getAllTypes() {
     const types = new Set();
     Array.from(this.presets.values()).forEach(preset => {
-      types.add(preset.type);
+      // Add types from tags
+      if (preset.tags && Array.isArray(preset.tags)) {
+        preset.tags.forEach(tag => {
+          // Add to types if it's a type tag
+          if (['generation', 'editing', 'style', 'custom'].includes(tag)) {
+            types.add(tag);
+          }
+        });
+      }
+      
+      // For backward compatibility
+      if (preset.type) {
+        types.add(preset.type);
+      }
     });
     return from(Promise.resolve(Array.from(types)));
   }

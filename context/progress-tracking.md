@@ -85,6 +85,8 @@ This document tracks the progress of the imagN project through its development p
 - Updated WorkflowPreset interface to include category, type, and tags fields
 - Enhanced category and tag system with separate category, type, and tags fields
 - Updated workflowPresets.js and workflowStorage.js to support the new structure
+- Redesigned the UI to support filtering by category, type, and tags
+- Created comprehensive documentation for the new category and tag system
 
 ## Current Sprint Tasks
 
