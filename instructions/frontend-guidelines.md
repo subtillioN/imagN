@@ -295,3 +295,99 @@ function StreamComponent(props) {
 - Document component props with JSDoc
 - Include examples in documentation
 - Test edge cases and accessibility
+
+## Form Handling and Validation
+
+### Form State Management
+
+For form handling within class components:
+
+1. Maintain form field values in component state
+2. Use controlled components (where form value is controlled by React state)
+3. Implement handlers for onChange, onBlur, and other relevant events
+4. Track form "touched" state for each field to display errors at appropriate times
+
+### Validation Patterns
+
+Form validation should follow these patterns:
+
+1. **Field-level validation**: Create a method like `validateField(fieldName, value)` that returns validation errors for a specific field
+2. **Form-level validation**: Implement a `validateForm()` method that validates all fields before submission
+3. **Error display**: Show errors only after a field has been touched or when form submission is attempted
+4. **Real-time validation**: Update errors as the user types, but only display them after the field has been touched
+5. **Name uniqueness**: When validating names (project names, filenames, etc.), check against existing items in the collection to prevent duplicates
+
+Example validation implementation:
+```tsx
+validateField(field: 'projectName' | 'projectType', value: string) {
+  const errors: { [key: string]: string } = {};
+  const { projects } = this.state;
+
+  switch(field) {
+    case 'projectName':
+      if (!value.trim()) {
+        errors.projectName = 'Project name is required';
+      } else if (value.trim().length > 50) {
+        errors.projectName = 'Project name must be less than 50 characters';
+      } else if (projects.some(project => project.name.toLowerCase() === value.trim().toLowerCase())) {
+        errors.projectName = 'Project name already exists';
+      }
+      break;
+    case 'projectType':
+      if (!value) {
+        errors.projectType = 'Please select a project type';
+      }
+      break;
+  }
+
+  return errors;
+}
+```
+
+## Focus Management
+
+Proper focus management improves the user experience and accessibility of the application.
+
+### Dialog Focus
+
+When opening dialogs or modal windows:
+
+1. Automatically focus the first interactive element (usually the primary input field)
+2. Use React refs to access the DOM element directly
+3. Use `componentDidUpdate` to detect when a dialog opens and set focus appropriately
+4. Add a small delay (with `setTimeout`) when necessary to ensure the DOM is fully rendered
+
+Example focus management:
+```tsx
+private inputRef = React.createRef<HTMLInputElement>();
+
+componentDidUpdate(prevProps: Props, prevState: State) {
+  // If the dialog just opened
+  if (!prevState.dialogOpen && this.state.dialogOpen) {
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      if (this.inputRef.current) {
+        this.inputRef.current.focus();
+      }
+    }, 100);
+  }
+}
+
+render() {
+  return (
+    <Dialog open={this.state.dialogOpen}>
+      <TextField 
+        inputRef={this.inputRef}
+        autoFocus // Backup method
+      />
+    </Dialog>
+  );
+}
+```
+
+### Focus Restoration
+
+When closing dialogs or navigating between screens:
+
+1. Return focus to the element that opened the dialog when it closes
+2. Maintain a reference to the element that should receive focus after an action

@@ -1,5 +1,45 @@
 # Bug Log
 
+This document tracks bugs, issues, and their resolution status throughout the development of the imagN application.
+
+## Active Bugs
+
+| ID | Description | Component | Priority | Status | Reported Date |
+|----|-------------|-----------|----------|--------|--------------|
+| B001 | Context menu positioning is inconsistent in dark mode | UI/UX | Medium | Under Investigation | 2024-02-23 |
+| B002 | Memory leak observed in node editor canvas after multiple edits | Node Editor | High | Needs Fix | 2024-02-24 |
+| B003 | Font rendering appears blurry on high DPI displays | UI/UX | Low | Needs Fix | 2024-02-24 |
+| B004 | Performance degradation when loading large node graphs | Node Editor | Medium | Under Investigation | 2024-02-24 |
+| B005 | Audio playback fails to start in video preview component | Video Workspace | High | Needs Fix | 2024-02-24 |
+
+## Fixed Bugs
+
+| ID | Description | Component | Priority | Fixed Date | Fix Description |
+|----|-------------|-----------|----------|------------|----------------|
+| B006 | ListItem component type errors in Load Project dialog | Project Management | High | 2024-03-24 | Replaced ListItem with Box containing Button for better type safety and visual representation |
+| B007 | Project name validation too restrictive (requiring 3+ characters) | Project Management | Medium | 2024-03-24 | Modified validation to allow single character names while preventing duplicates |
+| B008 | New Project dialog doesn't automatically focus the project name field | UI/UX | Low | 2024-03-24 | Implemented focus management using React refs and componentDidUpdate lifecycle method |
+
+## Issues Under Review
+
+| ID | Description | Component | Priority | Status | Reported Date |
+|----|-------------|-----------|----------|--------|--------------|
+| I001 | Consider implementing custom scroll behavior for long lists | UI/UX | Low | Open | 2024-02-23 |
+| I002 | Investigate WebGL performance with large image datasets | Image Workspace | Medium | Open | 2024-02-24 |
+| I003 | Evaluate alternatives for current node connection visualization | Node Editor | Medium | Open | 2024-02-24 |
+| I004 | Research better compression methods for video export | Video Workspace | Low | Open | 2024-02-24 |
+
+## Notes on Bug Reporting
+
+When adding new bugs, please follow this format:
+- Assign a unique ID (B for bugs, I for issues under review)
+- Provide a clear, concise description
+- Specify which component is affected
+- Set an appropriate priority (Low, Medium, High, Critical)
+- Track the status (Needs Fix, Under Investigation, In Progress, Fixed)
+- Include the date when reported or fixed
+- For fixed bugs, include a brief description of the fix
+
 ## Dev Tools Button Positioning Bug
 ### Issue Overview
 Tracking the positioning challenges and resolution attempts for the developer tools button component in the application interface.
