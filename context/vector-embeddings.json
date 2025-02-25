@@ -1,0 +1,76 @@
+{
+  "version": "1.0.0",
+  "created": "2024-02-25T00:00:00.000Z",
+  "files": {
+    "src/components/MainView.tsx": {
+      "description": "Main application component that manages the overall state and UI of the application",
+      "embedding": [],
+      "summary": "This component is the primary container for the application. It manages the overall state, including project management, tab navigation, and workspace selection. It contains methods for creating, loading, and managing projects, as well as rendering the appropriate workspace based on the selected tab and project type."
+    },
+    "src/services/workflowPresets.js": {
+      "description": "Service that manages workflow presets for the application",
+      "embedding": [],
+      "summary": "This service manages the registration and retrieval of workflow presets. It provides methods for registering default presets, retrieving presets by ID, and listing all available presets. It uses RxJS for reactive programming and maintains separate collections for system and user-defined presets."
+    },
+    "src/services/workflowStorage.js": {
+      "description": "Service that handles saving and loading user workflows",
+      "embedding": [],
+      "summary": "This service handles the serialization, storage, and retrieval of user-defined workflows. It provides methods for saving workflows to local storage, loading workflows from storage, and listing all available workflows. It includes utilities for serializing and deserializing workflow objects."
+    }
+  },
+  "concepts": {
+    "workflow_preset_system": {
+      "description": "The system for managing workflow presets",
+      "embedding": [],
+      "summary": "The workflow preset system is the core mechanism for creating and managing project templates. It allows users to select from default presets or create their own custom workflows. The system includes both system-defined and user-defined presets, with a clear visual separation in the UI."
+    },
+    "project_management": {
+      "description": "The system for creating, loading, and managing projects",
+      "embedding": [],
+      "summary": "Project management in ImagN includes features for creating new projects based on presets, loading existing projects, and managing project metadata. Projects can be of different types based on the selected preset, and their content is rendered in the appropriate workspace."
+    },
+    "reactive_programming": {
+      "description": "The reactive programming pattern used in the application",
+      "embedding": [],
+      "summary": "ImagN uses reactive programming with RxJS to manage asynchronous data flows and state updates. Services expose observables that components can subscribe to, creating a reactive data flow through the application. This pattern helps manage complex state and asynchronous operations in a more predictable way."
+    }
+  },
+  "contexts": {
+    "default": {
+      "name": "Default Context",
+      "description": "Default working context for ImagN development",
+      "files": [
+        "src/components/MainView.tsx",
+        "src/services/workflowPresets.js",
+        "src/services/workflowStorage.js"
+      ],
+      "concepts": [
+        "workflow_preset_system",
+        "project_management",
+        "reactive_programming"
+      ]
+    },
+    "preset_development": {
+      "name": "Preset System Development",
+      "description": "Context focused on workflow preset system development",
+      "files": [
+        "src/services/workflowPresets.js",
+        "src/components/MainView.tsx"
+      ],
+      "concepts": [
+        "workflow_preset_system"
+      ]
+    },
+    "project_management": {
+      "name": "Project Management",
+      "description": "Context focused on project management features",
+      "files": [
+        "src/components/MainView.tsx",
+        "src/services/workflowStorage.js"
+      ],
+      "concepts": [
+        "project_management"
+      ]
+    }
+  }
+} 

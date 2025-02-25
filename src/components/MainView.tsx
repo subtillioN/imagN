@@ -66,7 +66,7 @@ interface Project {
   description: string;
   createdAt: string;
   lastModified: string;
-  presetId?: string;
+  presetId: string;
 }
 
 // Interface for workflow presets
@@ -74,7 +74,7 @@ interface WorkflowPreset {
   id: string;
   name: string;
   description: string;
-  isUserDefined?: boolean;
+  category: string;
 }
 
 // Define interfaces for the services
@@ -82,6 +82,7 @@ interface PresetType {
   id: string;
   name: string;
   description: string;
+  category: string;
   [key: string]: any; // Allow for additional properties
 }
 
@@ -246,31 +247,20 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   componentDidMount() {
     this.initializeStreams();
     
-    // Load system presets
-    workflowPresetService.getAllImagePresets().subscribe((presets: PresetType[]) => {
-      const systemImagePresets = presets.map((preset: PresetType) => ({
-        id: preset.id,
-        name: preset.name,
-        description: preset.description,
-        isUserDefined: false
-      }));
+    // Load all presets
+    workflowPresetService.getAllPresets().subscribe((presets: PresetType[]) => {
+      const systemPresets = presets
+        .filter((preset: PresetType) => preset.category === 'default')
+        .map((preset: PresetType) => ({
+          id: preset.id,
+          name: preset.name,
+          description: preset.description,
+          category: preset.category
+        }));
       
-      this.setState(prevState => ({
-        systemPresets: [...prevState.systemPresets, ...systemImagePresets]
-      }));
-    });
-    
-    workflowPresetService.getAllVideoPresets().subscribe((presets: PresetType[]) => {
-      const systemVideoPresets = presets.map((preset: PresetType) => ({
-        id: preset.id,
-        name: preset.name,
-        description: preset.description,
-        isUserDefined: false
-      }));
-      
-      this.setState(prevState => ({
-        systemPresets: [...prevState.systemPresets, ...systemVideoPresets]
-      }));
+      this.setState({
+        systemPresets: systemPresets
+      });
     });
     
     // Load user-defined presets
@@ -279,7 +269,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       id: workflow.id,
       name: workflow.name,
       description: workflow.description || 'User-defined workflow',
-      isUserDefined: true
+      category: workflow.category || 'user'
     }));
     
     this.setState({
@@ -354,43 +344,36 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   }
 
   validateField(field: string, value: string) {
-    const errors: { [key: string]: string } = {};
-    const { projects } = this.state;
+    const errors: any = {};
     
     switch (field) {
       case 'projectName':
-        if (!value.trim()) {
+        const trimmedInputValue = value.trim();
+        
+        if (!trimmedInputValue) {
           errors.projectName = 'Project name is required';
-        } else if (value.trim().length > 50) {
+          break;
+        }
+        
+        if (trimmedInputValue.length > 50) {
           errors.projectName = 'Project name must be less than 50 characters';
-        } else {
-          // Check for duplicate project names
-          const trimmedInputValue = value.trim().toLowerCase();
-          
-          // Debug logging
-          console.log(`Validating project name: ${value}`);
-          console.log(`Trimmed and lowercase: ${trimmedInputValue}`);
-          console.log('All projects for comparison:', JSON.stringify(projects));
-          
-          for (const project of projects) {
-            const projectName = project.name.trim().toLowerCase();
-            
-            // Debug logging for comparison
-            console.log(`Comparing with project: ${project.id}, name: ${project.name}`);
-            console.log(`Comparison result: ${projectName === trimmedInputValue}`);
-            
-            if (projectName === trimmedInputValue) {
-              errors.projectName = 'A project with this name already exists';
-              console.log('Duplicate found:', project);
-              break;
-            }
+          break;
+        }
+        
+        // Check for duplicate project names
+        const { projects } = this.state;
+        
+        for (const project of projects) {
+          if (project.name.trim().toLowerCase() === trimmedInputValue.toLowerCase()) {
+            errors.projectName = 'A project with this name already exists';
+            break;
           }
         }
         break;
         
       case 'projectPreset':
         if (!value) {
-          errors.projectPreset = 'Please select a workflow preset';
+          errors.projectPreset = 'Please select a preset';
         }
         break;
     }
@@ -566,18 +549,20 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                 required 
                 error={formTouched.projectPreset && Boolean(errors.projectPreset)}
               >
-                <InputLabel id="project-preset-label">Workflow Preset</InputLabel>
+                <InputLabel id="project-preset-label">Preset</InputLabel>
                 <Select
                   labelId="project-preset-label"
                   value={newProjectPreset}
-                  label="Workflow Preset"
+                  label="Preset"
                   onChange={handlePresetChange}
                   onBlur={() => this.setState({ formTouched: { ...formTouched, projectPreset: true } })}
                 >
                   {/* System presets */}
                   {systemPresets.length > 0 && (
                     <>
-                      <ListSubheader>System Presets</ListSubheader>
+                      <ListSubheader sx={{ bgcolor: 'background.paper', fontWeight: 'bold' }}>
+                        System Presets
+                      </ListSubheader>
                       {systemPresets.map(preset => (
                         <MenuItem key={preset.id} value={preset.id}>
                           {preset.name}
@@ -590,7 +575,9 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                   {userPresets.length > 0 && (
                     <>
                       <Divider sx={{ my: 1 }} />
-                      <ListSubheader>User-Defined Presets</ListSubheader>
+                      <ListSubheader sx={{ bgcolor: 'background.paper', fontWeight: 'bold' }}>
+                        User-Defined Presets
+                      </ListSubheader>
                       {userPresets.map(preset => (
                         <MenuItem key={preset.id} value={preset.id}>
                           {preset.name}
@@ -602,7 +589,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                 <FormHelperText>
                   {formTouched.projectPreset && errors.projectPreset ?
                     errors.projectPreset :
-                    'Select a workflow preset for your project'}
+                    'Select a preset for your project'}
                 </FormHelperText>
               </FormControl>
             </Grid>
@@ -844,9 +831,9 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       );
     }
     
-    // Determine which workspace to show based on the selected preset
-    // We'll use the presetId to determine the appropriate workspace
+    // Get the preset details
     const presetId = currentProject.presetId || '';
+    const preset = this.getPresetDetails(presetId);
     
     // For now, we'll just show a placeholder based on the tab
     switch (currentTab) {
@@ -860,7 +847,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
               Working on project: {currentProject.name}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Preset ID: {presetId}
+              Preset: {preset?.name || 'Unknown'}
             </Typography>
             {/* Image workspace components would go here */}
           </Box>
@@ -875,7 +862,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
               Working on project: {currentProject.name}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Preset ID: {presetId}
+              Preset: {preset?.name || 'Unknown'}
             </Typography>
             {/* Video workspace components would go here */}
           </Box>
@@ -890,7 +877,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
               Working on project: {currentProject.name}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Preset ID: {presetId}
+              Preset: {preset?.name || 'Unknown'}
             </Typography>
             {/* Node editor components would go here */}
           </Box>
@@ -898,6 +885,21 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       default:
         return null;
     }
+  }
+  
+  // Helper method to get preset details by ID
+  getPresetDetails(presetId: string): WorkflowPreset | undefined {
+    const { systemPresets, userPresets } = this.state;
+    
+    // Check system presets
+    const systemPreset = systemPresets.find(preset => preset.id === presetId);
+    if (systemPreset) return systemPreset;
+    
+    // Check user presets
+    const userPreset = userPresets.find(preset => preset.id === presetId);
+    if (userPreset) return userPreset;
+    
+    return undefined;
   }
 
   renderTabContent() {
@@ -1042,7 +1044,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         description: 'Photorealistic landscape generation with mountains and water',
         createdAt: '2023-02-10T12:30:00Z',
         lastModified: '2023-02-15T14:20:00Z',
-        presetId: 'landscape-preset'
+        presetId: 'image-generation'
       },
       {
         id: '2',
@@ -1050,7 +1052,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         description: 'Futuristic character with glowing elements in motion',
         createdAt: '2023-02-08T09:15:00Z',
         lastModified: '2023-02-12T11:45:00Z',
-        presetId: 'scifi-preset'
+        presetId: 'video-generation'
       },
       {
         id: '3',
@@ -1058,7 +1060,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         description: 'Node-based workflow for generating abstract art patterns',
         createdAt: '2023-02-05T10:00:00Z',
         lastModified: '2023-02-11T16:30:00Z',
-        presetId: 'abstract-preset'
+        presetId: 'node-workflow'
       }
     ];
   }
@@ -1107,18 +1109,17 @@ export class MainView extends Component<MainViewProps, MainViewState> {
         snackbarSeverity: 'success'
       });
       
-      // Determine which tab to navigate to based on the preset
-      let targetTab = 0;
+      // Get the preset details to determine which tab to navigate to
+      const preset = this.getPresetDetails(selectedProject.presetId || '');
+      let targetTab = 0; // Default to Image Workspace
       
-      // Use presetId to determine the appropriate tab
-      const presetId = selectedProject.presetId || '';
-      
-      if (presetId.includes('image')) {
-        targetTab = 0; // Image Workspace
-      } else if (presetId.includes('video')) {
-        targetTab = 1; // Video Workspace
-      } else {
-        targetTab = 2; // Node Editor
+      if (preset) {
+        // Determine tab based on preset name or other properties
+        if (preset.name.toLowerCase().includes('video')) {
+          targetTab = 1; // Video Workspace
+        } else if (preset.name.toLowerCase().includes('node')) {
+          targetTab = 2; // Node Editor
+        }
       }
       
       // Navigate to the appropriate tab
@@ -1261,18 +1262,8 @@ export class MainView extends Component<MainViewProps, MainViewState> {
 
   // Helper method to get preset name by ID
   getPresetNameById(presetId: string): string {
-    const { systemPresets, userPresets } = this.state;
-    
-    // Check system presets
-    const systemPreset = systemPresets.find(preset => preset.id === presetId);
-    if (systemPreset) return systemPreset.name;
-    
-    // Check user presets
-    const userPreset = userPresets.find(preset => preset.id === presetId);
-    if (userPreset) return userPreset.name;
-    
-    // Default fallback
-    return "Unknown Preset";
+    const preset = this.getPresetDetails(presetId);
+    return preset ? preset.name : "Unknown Preset";
   }
 
   // Add missing method for selecting a project
@@ -1286,9 +1277,14 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   getPresetIcon(presetId: string | undefined) {
     if (!presetId) return <AccountTreeIcon />;
     
-    if (presetId.includes('image')) {
+    const preset = this.getPresetDetails(presetId);
+    if (!preset) return <AccountTreeIcon />;
+    
+    const presetName = preset.name.toLowerCase();
+    
+    if (presetName.includes('image')) {
       return <ImageIcon />;
-    } else if (presetId.includes('video')) {
+    } else if (presetName.includes('video')) {
       return <VideocamIcon />;
     } else {
       return <AccountTreeIcon />;

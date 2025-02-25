@@ -19,6 +19,12 @@ This document tracks bugs, issues, and their resolution status throughout the de
 | B006 | ListItem component type errors in Load Project dialog | Project Management | High | 2024-03-24 | Replaced ListItem with Box containing Button for better type safety and visual representation |
 | B007 | Project name validation too restrictive (requiring 3+ characters) | Project Management | Medium | 2024-03-24 | Modified validation to allow single character names while preventing duplicates |
 | B008 | New Project dialog doesn't automatically focus the project name field | UI/UX | Low | 2024-03-24 | Implemented focus management using React refs and componentDidUpdate lifecycle method |
+| B009 | Project name "Glll" incorrectly flagged as duplicate | Project Management | High | 2024-03-25 | Removed special case handling and improved validation logic to use strict equality for comparisons |
+| B010 | Project type distinction causing confusion in UI | Project Management | Medium | 2024-03-25 | Refactored to use workflow presets as project types, removing the artificial distinction |
+| B011 | Missing RxJS dependency causing application startup errors | Dependencies | Critical | 2024-03-25 | Installed RxJS package with --legacy-peer-deps flag to resolve dependency conflicts |
+| B012 | New project presets not selectable in dropdown | Project Management | High | 2024-03-25 | Unified preset system with consistent data structure and improved preset loading in componentDidMount |
+| B013 | Inconsistent preset categorization between system and user presets | Project Management | Medium | 2024-03-25 | Implemented a unified category-based system with 'default' and 'user' categories for all presets |
+| B014 | Preset selection UI lacked clear visual separation | UI/UX | Medium | 2024-03-25 | Enhanced the preset dropdown with improved styling, subheaders, and a divider between system and user presets |
 
 ## Issues Under Review
 
@@ -28,6 +34,9 @@ This document tracks bugs, issues, and their resolution status throughout the de
 | I002 | Investigate WebGL performance with large image datasets | Image Workspace | Medium | Open | 2024-02-24 |
 | I003 | Evaluate alternatives for current node connection visualization | Node Editor | Medium | Open | 2024-02-24 |
 | I004 | Research better compression methods for video export | Video Workspace | Low | Open | 2024-02-24 |
+| I005 | Evaluate user experience of the workflow preset selection | Project Management | Medium | Open | 2024-03-25 |
+| I006 | Consider adding preset thumbnails for visual selection | UI/UX | Medium | Open | 2024-03-25 |
+| I007 | Investigate preset forking functionality for user customization | Project Management | Medium | Open | 2024-03-25 |
 
 ## Notes on Bug Reporting
 
@@ -131,4 +140,4 @@ Tracking the positioning challenges and resolution attempts for the developer to
 - **Current Status**: In Progress
 - **Priority**: Medium
 - **Impact**: UI/UX
-- **Last Updated**: [Current Date]
+- **Last Updated**: March 25, 2024

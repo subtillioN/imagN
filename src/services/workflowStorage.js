@@ -10,6 +10,8 @@ export class WorkflowStorageService {
     return {
       id: workflow.id || `workflow-${Date.now()}`,
       name: workflow.name || 'Untitled Workflow',
+      description: workflow.description || '',
+      category: 'user',
       nodes: workflow.nodes.map(node => ({
         ...node,
         position: {

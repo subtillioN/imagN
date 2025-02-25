@@ -49,7 +49,7 @@
 - Husky: [.husky/pre-commit](../../.husky/pre-commit)
 
 ### Documentation
-- Main Documentation: [cursor-rules.md](../../instructions/cursor-rules.md)
+- Main Documentation: [cursor-rules.md](../../context/cursor-rules.md)
 
 ## Version Information
 - Current Version: 1.0.0

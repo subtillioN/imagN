@@ -3,7 +3,7 @@
 This document tracks the progress of the imagN project through its development phases.
 
 ## Phase 1: Core Application Structure and Basic Functionality
-[Last Updated: Mar 24, 2024]
+[Last Updated: March 25, 2024]
 
 ### Completed Tasks
 
@@ -11,6 +11,7 @@ This document tracks the progress of the imagN project through its development p
 - [x] Set up React + TypeScript project with Vite
 - [x] Configure Material UI with dark/light theme support
 - [x] Set up basic project structure and routing
+- [x] Install and configure RxJS for reactive programming
 
 #### Core UI Layout
 - [x] Create main application layout
@@ -23,10 +24,15 @@ This document tracks the progress of the imagN project through its development p
 - [x] Implement New Project dialog with form validation
   - [x] Enhanced validation to allow single-character project names while preventing duplicates
   - [x] Added automatic focus on project name field when the dialog opens
-- [x] Create project type selection mechanism
+- [x] Implement workflow preset selection system
+  - [x] Added support for both system presets and user-defined presets
+  - [x] Created clear visual separation between preset types
+  - [x] Unified project type system into a single preset-based approach
+  - [x] Added default presets for Image Generation, Video Generation, and Node-based Workflow
 - [x] Implement Load Project dialog with project listing
   - [x] Fixed visual representation of selected projects
   - [x] Improved UI with buttons instead of list items
+  - [x] Reorganized to clearly separate user projects from new project creation
 - [x] Add project deletion functionality
 - [x] Implement project saving mechanism
 - [x] Add notification system for user feedback
@@ -41,6 +47,10 @@ This document tracks the progress of the imagN project through its development p
 - [ ] Implement proper state management system
 - [ ] Create settings panel for application configuration
 - [ ] Implement image generation parameter controls
+- [ ] Enhance workflow preset management
+  - [ ] Implement preset creation and editing
+  - [ ] Add preset sharing functionality
+  - [ ] Create preset preview thumbnails
 
 ### Not Started
 - [ ] Implement image preview component

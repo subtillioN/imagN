@@ -15,7 +15,11 @@
     "format": "prettier --write 'src/**/*.{ts,tsx,css,md}'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx,css,md}'",
     "analyze-bundle": "vite build --analyze",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "context:load": "node .cursor/scripts/context-loader.js",
+    "context:save": "node .cursor/scripts/context-saver.js",
+    "context:update-vectors": "node .cursor/scripts/vector-generator.js",
+    "context:list": "node -e \"const fs=require('fs');const path=require('path');const emb=JSON.parse(fs.readFileSync(path.resolve(__dirname, 'context/vector-embeddings.json')));console.log('Available contexts:\\n' + Object.entries(emb.contexts).map(([k,v]) => `- ${k}: ${v.name} - ${v.description}`).join('\\n'))\""
   },
   "jest": {
     "transform": {
