@@ -82,17 +82,22 @@ interface WorkflowPreset {
   // Keep these for backward compatibility
   category?: string;
   type?: string;
+  // Add nodes and connections
+  nodes?: Array<{
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    params?: Record<string, any>;
+  }>;
+  connections?: Array<{
+    id: string;
+    from: { nodeId: string; outputId: string };
+    to: { nodeId: string; inputId: string };
+  }>;
 }
 
 // Define interfaces for the services
-interface PresetType {
-  id: string;
-  name: string;
-  description: string;
-  tags: string[];
-  // Keep these for backward compatibility
-  category?: string;
-  type?: string;
+interface PresetType extends WorkflowPreset {
   [key: string]: any;   // Allow for additional properties
 }
 
@@ -135,10 +140,7 @@ interface MainViewState {
     projectName?: string;
     projectPreset?: string;
   };
-  formTouched: {
-    projectName: boolean;
-    projectPreset: boolean;
-  };
+  formTouched: Record<string, boolean>;
   // Workflow presets
   systemPresets: WorkflowPreset[];
   userPresets: WorkflowPreset[];
@@ -154,6 +156,22 @@ interface MainViewState {
   tagManagementDialogOpen: boolean;
   editingPresetId: string | null;
   newTag: string;
+  selectedPresetId: string | null;
+  nodes: WorkflowNode[];
+  connections: WorkflowConnection[];
+}
+
+interface WorkflowNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  params?: Record<string, any>;
+}
+
+interface WorkflowConnection {
+  id: string;
+  from: { nodeId: string; outputId: string };
+  to: { nodeId: string; inputId: string };
 }
 
 export class MainView extends Component<MainViewProps, MainViewState> {
@@ -165,19 +183,10 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   private projectNameInputRef = React.createRef<HTMLInputElement>();
   private debouncedValidateProjectName: (value: string) => void;
   private workflowStorage: WorkflowStorageService;
+  private editorInstance: any;
 
   constructor(props: MainViewProps) {
     super(props);
-    
-    // Initialize workflow storage service
-    this.workflowStorage = new WorkflowStorageService();
-    
-    // Load presets
-    const systemImagePresets: WorkflowPreset[] = [];
-    const systemVideoPresets: WorkflowPreset[] = [];
-    const userPresets: WorkflowPreset[] = [];
-    
-    // We'll populate these in componentDidMount
     
     this.state = {
       imageConfig: {},
@@ -206,7 +215,6 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       // Form validation
       errors: {},
       formTouched: {
-        projectName: false,
         projectPreset: false
       },
       // Workflow presets
@@ -223,8 +231,13 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       // Tag management
       tagManagementDialogOpen: false,
       editingPresetId: null,
-      newTag: ''
+      newTag: '',
+      selectedPresetId: null,
+      nodes: [],
+      connections: []
     };
+    this.editorInstance = null;
+    this.workflowStorage = new WorkflowStorageService();
     this.initializeStreams();
 
     // Bind methods
@@ -285,13 +298,32 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   }
 
   componentDidMount() {
-    this.initializeStreams();
+    // Initialize the editor instance
+    this.editorInstance = {
+      loadPreset: (preset: WorkflowPreset) => {
+        console.log('Loading preset into editor:', preset);
+        if (preset.nodes && preset.connections) {
+          this.setState(prevState => ({
+            ...prevState,
+            nodes: preset.nodes,
+            connections: preset.connections
+          }));
+        }
+      }
+    };
+
+    // Load presets
+    this.loadPresets();
     
+    // Initialize streams
+    this.initializeStreams();
+  }
+
+  loadPresets() {
     // Load all presets
     workflowPresetService.getAllPresets().subscribe((presets: PresetType[]) => {
       const systemPresets = presets
         .filter((preset: PresetType) => 
-          // A preset is a system preset if it has the 'default' tag
           preset.tags && Array.isArray(preset.tags) && preset.tags.includes('default')
         )
         .map((preset: PresetType) => ({
@@ -299,38 +331,34 @@ export class MainView extends Component<MainViewProps, MainViewState> {
           name: preset.name,
           description: preset.description,
           tags: preset.tags || [],
-          category: preset.category,
-          type: preset.type
+          nodes: preset.nodes || [],
+          connections: preset.connections || []
         }));
       
-      this.setState({
-        systemPresets: systemPresets,
-        // Set a default preset when presets are loaded
-        newProjectPreset: systemPresets.length > 0 ? systemPresets[0].id : ''
+      // Set initial state with presets
+      this.setState({ 
+        systemPresets,
+        selectedPresetId: systemPresets.length > 0 ? systemPresets[0].id : ''
       });
-      
-      // Get all unique tags for filtering
+
+      // Update available filters
       this.updateAvailableFilters(systemPresets, this.state.userPresets);
     });
-    
+
     // Load user-defined presets
     const userWorkflows = this.workflowStorage.getAllWorkflows();
     const userWorkflowPresets = userWorkflows.map((workflow: any) => ({
       id: workflow.id,
       name: workflow.name,
       description: workflow.description || 'User-defined workflow',
-      category: workflow.category || 'user',
-      type: workflow.type || 'custom',
-      tags: workflow.tags || [],
-      categories: workflow.categories || ['user']
+      tags: workflow.tags || ['user'],
+      nodes: workflow.nodes || [],
+      connections: workflow.connections || []
     }));
-    
+
     this.setState({
       userPresets: userWorkflowPresets
     });
-    
-    // Get all unique categories, types, and tags
-    this.updateAvailableFilters(this.state.systemPresets, userWorkflowPresets);
   }
 
   componentDidUpdate(prevProps: MainViewProps, prevState: MainViewState) {
@@ -552,16 +580,43 @@ export class MainView extends Component<MainViewProps, MainViewState> {
 
     const handlePresetChange = (e: SelectChangeEvent) => {
       const value = e.target.value;
-      const newErrors = this.validateField('projectPreset', value);
+      console.log('Preset selected:', value);
       
-      this.setState({ 
-        newProjectPreset: value,
-        formTouched: { ...formTouched, projectPreset: true },
-        errors: { ...errors, ...newErrors }
-      });
+      // Find the selected preset
+      const selectedPreset = [...systemPresets, ...userPresets]
+        .find(preset => preset.id === value);
       
-      // Log the selected preset for debugging
-      console.log('Selected preset:', value);
+      console.log('Found preset:', selectedPreset);
+      
+      if (selectedPreset) {
+        // Update the state with the selected preset
+        this.setState(prevState => ({
+          ...prevState,
+          selectedPresetId: value,
+          formTouched: { ...prevState.formTouched, projectPreset: true }
+        }));
+
+        // Load the preset's nodes and connections
+        if (selectedPreset.nodes && selectedPreset.connections) {
+          this.setState(prevState => ({
+            ...prevState,
+            nodes: selectedPreset.nodes,
+            connections: selectedPreset.connections
+          }));
+
+          // Update the editor instance if it exists
+          if (this.editorInstance) {
+            this.editorInstance.loadPreset(selectedPreset);
+            console.log('Preset loaded into editor');
+          } else {
+            console.warn('Editor instance not available');
+          }
+        } else {
+          console.warn('Preset missing nodes or connections');
+        }
+      } else {
+        console.warn('Selected preset not found:', value);
+      }
     };
     
     const handleCategoryToggle = (category: string) => {
@@ -831,21 +886,15 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                         <Box>
                           {preset.name}
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                            {preset.tags && Array.isArray(preset.tags) && preset.tags
-                              .filter(tag => tag !== 'default' && tag !== 'user')
-                              .map(tag => (
-                                <Chip
-                                  key={tag}
-                                  label={tag}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{ 
-                                    height: 20, 
-                                    fontSize: '0.7rem',
-                                    textTransform: 'capitalize'
-                                  }}
-                                />
-                              ))}
+                            {preset.tags?.map(tag => (
+                              <Chip
+                                key={tag}
+                                label={tag}
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontSize: '0.7rem' }}
+                              />
+                            ))}
                           </Box>
                         </Box>
                       </MenuItem>
