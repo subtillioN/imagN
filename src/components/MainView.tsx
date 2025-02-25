@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -31,7 +31,13 @@ import {
   Divider,
   Snackbar,
   Alert,
-  SelectChangeEvent
+  SelectChangeEvent,
+  ListSubheader,
+  Stack,
+  ListItemButton,
+  ListItemAvatar,
+  Avatar,
+  ListItemIcon
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -39,19 +45,44 @@ import {
   Close as CloseIcon,
   Folder as FolderIcon,
   Save as SaveIcon,
-  DeleteOutline as DeleteIcon
+  DeleteOutline as DeleteIcon,
+  FolderOpen as FolderOpenIcon,
+  Image as ImageIcon,
+  Videocam as VideocamIcon,
+  AccountTree as AccountTreeIcon
 } from '@mui/icons-material';
 import DevToolsButton from './DevToolsButton';
 import ThemeToggleButton from './ThemeToggleButton';
+import debounce from 'lodash.debounce';
+// @ts-ignore
+import { workflowPresetService } from '../services/workflowPresets';
+// @ts-ignore
+import { WorkflowStorageService } from '../services/workflowStorage';
 
 // Sample project type for TypeScript
 interface Project {
   id: string;
   name: string;
-  type: 'image' | 'video' | 'node';
   description: string;
   createdAt: string;
   lastModified: string;
+  presetId?: string;
+}
+
+// Interface for workflow presets
+interface WorkflowPreset {
+  id: string;
+  name: string;
+  description: string;
+  isUserDefined?: boolean;
+}
+
+// Define interfaces for the services
+interface PresetType {
+  id: string;
+  name: string;
+  description: string;
+  [key: string]: any; // Allow for additional properties
 }
 
 interface MainViewProps {
@@ -76,7 +107,7 @@ interface MainViewState {
   // New Project Dialog State
   newProjectDialogOpen: boolean;
   newProjectName: string;
-  newProjectType: 'image' | 'video' | 'node' | '';
+  newProjectPreset: string;
   newProjectDescription: string;
   // Load Project Dialog State
   loadProjectDialogOpen: boolean;
@@ -91,12 +122,15 @@ interface MainViewState {
   // Form validation
   errors: {
     projectName?: string;
-    projectType?: string;
+    projectPreset?: string;
   };
   formTouched: {
     projectName: boolean;
-    projectType: boolean;
+    projectPreset: boolean;
   };
+  // Workflow presets
+  systemPresets: WorkflowPreset[];
+  userPresets: WorkflowPreset[];
 }
 
 export class MainView extends Component<MainViewProps, MainViewState> {
@@ -105,9 +139,23 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   private results$: any;
   private transitionTimeout: NodeJS.Timeout | null = null;
   private animationTimeout: NodeJS.Timeout | null = null;
+  private projectNameInputRef = React.createRef<HTMLInputElement>();
+  private debouncedValidateProjectName: (value: string) => void;
+  private workflowStorage: WorkflowStorageService;
 
   constructor(props: MainViewProps) {
     super(props);
+    
+    // Initialize workflow storage service
+    this.workflowStorage = new WorkflowStorageService();
+    
+    // Load presets
+    const systemImagePresets: WorkflowPreset[] = [];
+    const systemVideoPresets: WorkflowPreset[] = [];
+    const userPresets: WorkflowPreset[] = [];
+    
+    // We'll populate these in componentDidMount
+    
     this.state = {
       imageConfig: {},
       progress: {},
@@ -120,7 +168,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       // New Project Dialog State
       newProjectDialogOpen: false,
       newProjectName: '',
-      newProjectType: '',
+      newProjectPreset: '',
       newProjectDescription: '',
       // Load Project Dialog State
       loadProjectDialogOpen: false,
@@ -136,8 +184,11 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       errors: {},
       formTouched: {
         projectName: false,
-        projectType: false
-      }
+        projectPreset: false
+      },
+      // Workflow presets
+      systemPresets: [],
+      userPresets: []
     };
     this.initializeStreams();
 
@@ -156,6 +207,14 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     this.handleSaveProject = this.handleSaveProject.bind(this);
     this.handleCloseSnackbar = this.handleCloseSnackbar.bind(this);
     this.handleDeleteProject = this.handleDeleteProject.bind(this);
+    
+    // Initialize the debounced function
+    this.debouncedValidateProjectName = debounce((value: string) => {
+      const newErrors = this.validateField('projectName', value);
+      this.setState(prevState => ({ 
+        errors: { ...prevState.errors, ...newErrors }
+      }));
+    }, 300);
   }
 
   initializeStreams() {
@@ -186,6 +245,58 @@ export class MainView extends Component<MainViewProps, MainViewState> {
 
   componentDidMount() {
     this.initializeStreams();
+    
+    // Load system presets
+    workflowPresetService.getAllImagePresets().subscribe((presets: PresetType[]) => {
+      const systemImagePresets = presets.map((preset: PresetType) => ({
+        id: preset.id,
+        name: preset.name,
+        description: preset.description,
+        isUserDefined: false
+      }));
+      
+      this.setState(prevState => ({
+        systemPresets: [...prevState.systemPresets, ...systemImagePresets]
+      }));
+    });
+    
+    workflowPresetService.getAllVideoPresets().subscribe((presets: PresetType[]) => {
+      const systemVideoPresets = presets.map((preset: PresetType) => ({
+        id: preset.id,
+        name: preset.name,
+        description: preset.description,
+        isUserDefined: false
+      }));
+      
+      this.setState(prevState => ({
+        systemPresets: [...prevState.systemPresets, ...systemVideoPresets]
+      }));
+    });
+    
+    // Load user-defined presets
+    const userWorkflows = this.workflowStorage.getAllWorkflows();
+    const userWorkflowPresets = userWorkflows.map((workflow: any) => ({
+      id: workflow.id,
+      name: workflow.name,
+      description: workflow.description || 'User-defined workflow',
+      isUserDefined: true
+    }));
+    
+    this.setState({
+      userPresets: userWorkflowPresets
+    });
+  }
+
+  componentDidUpdate(prevProps: MainViewProps, prevState: MainViewState) {
+    // Focus the project name input when the dialog opens
+    if (!prevState.newProjectDialogOpen && this.state.newProjectDialogOpen) {
+      // Use setTimeout to ensure the dialog is fully rendered before focusing
+      setTimeout(() => {
+        if (this.projectNameInputRef.current) {
+          this.projectNameInputRef.current.focus();
+        }
+      }, 100);
+    }
   }
 
   componentWillUnmount() {
@@ -198,46 +309,42 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     }
   }
 
-  handleTabChange(event: React.SyntheticEvent, newValue: number) {
-    const { currentTab, isTransitioning } = this.state;
+  handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const { currentTab } = this.state;
     
-    // Prevent rapid tab changes during transition
-    if (isTransitioning) return;
+    // If we're already on this tab, do nothing
+    if (newValue === currentTab) return;
     
-    // Determine slide direction based on tab index
-    const direction = newValue > currentTab ? 'left' : 'right';
+    // Determine slide direction
+    const slideDirection = newValue > currentTab ? 'left' : 'right';
     
-    // Update state with new direction and transition flag
-    this.setState({ 
-      slideDirection: direction,
-      previousTab: currentTab,
+    // Set transitioning state
+    this.setState({
       isTransitioning: true,
-      currentTab: newValue
+      slideDirection,
+      previousTab: currentTab
     });
-
-    // Clear any existing timeouts
-    if (this.animationTimeout) {
-      clearTimeout(this.animationTimeout);
-      this.animationTimeout = null;
-    }
     
-    // End the transition after animation completes
-    this.animationTimeout = setTimeout(() => {
-      this.setState({ isTransitioning: false });
-    }, 300); // Match animation duration
-  }
+    // After a short delay, update the current tab
+    setTimeout(() => {
+      this.setState({
+        currentTab: newValue,
+        isTransitioning: false
+      });
+    }, 300); // Match this with the transition duration in CSS
+  };
 
   // New Project methods
   handleNewProjectClick() {
     this.setState({ 
       newProjectDialogOpen: true,
       newProjectName: '',
-      newProjectType: '',
+      newProjectPreset: '',
       newProjectDescription: '',
       errors: {},
       formTouched: {
         projectName: false,
-        projectType: false
+        projectPreset: false
       }
     });
   }
@@ -246,47 +353,73 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     this.setState({ newProjectDialogOpen: false });
   }
 
-  validateField(field: 'projectName' | 'projectType', value: string) {
+  validateField(field: string, value: string) {
     const errors: { [key: string]: string } = {};
-
-    switch(field) {
+    const { projects } = this.state;
+    
+    switch (field) {
       case 'projectName':
         if (!value.trim()) {
           errors.projectName = 'Project name is required';
-        } else if (value.trim().length < 3) {
-          errors.projectName = 'Project name must be at least 3 characters';
         } else if (value.trim().length > 50) {
           errors.projectName = 'Project name must be less than 50 characters';
+        } else {
+          // Check for duplicate project names
+          const trimmedInputValue = value.trim().toLowerCase();
+          
+          // Debug logging
+          console.log(`Validating project name: ${value}`);
+          console.log(`Trimmed and lowercase: ${trimmedInputValue}`);
+          console.log('All projects for comparison:', JSON.stringify(projects));
+          
+          for (const project of projects) {
+            const projectName = project.name.trim().toLowerCase();
+            
+            // Debug logging for comparison
+            console.log(`Comparing with project: ${project.id}, name: ${project.name}`);
+            console.log(`Comparison result: ${projectName === trimmedInputValue}`);
+            
+            if (projectName === trimmedInputValue) {
+              errors.projectName = 'A project with this name already exists';
+              console.log('Duplicate found:', project);
+              break;
+            }
+          }
         }
         break;
-      case 'projectType':
+        
+      case 'projectPreset':
         if (!value) {
-          errors.projectType = 'Please select a project type';
+          errors.projectPreset = 'Please select a workflow preset';
         }
         break;
     }
-
+    
+    this.setState(prevState => ({
+      errors: { ...prevState.errors, ...errors }
+    }));
+    
     return errors;
   }
 
   validateForm() {
-    const { newProjectName, newProjectType } = this.state;
+    const { newProjectName, newProjectPreset } = this.state;
     
     // Mark all fields as touched
     this.setState({
       formTouched: {
         projectName: true,
-        projectType: true
+        projectPreset: true
       }
     });
 
     // Validate all fields
     const nameErrors = this.validateField('projectName', newProjectName);
-    const typeErrors = this.validateField('projectType', newProjectType);
+    const presetErrors = this.validateField('projectPreset', newProjectPreset);
     
     const combinedErrors = {
       ...nameErrors,
-      ...typeErrors
+      ...presetErrors
     };
     
     this.setState({ errors: combinedErrors });
@@ -296,86 +429,93 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   }
 
   handleNewProjectCreate() {
-    // Validate all form fields
-    if (!this.validateForm()) {
-      // If validation fails, stop here
+    const { newProjectName, newProjectPreset, newProjectDescription } = this.state;
+    
+    // Validate all fields
+    const nameErrors = this.validateField('projectName', newProjectName);
+    const presetErrors = this.validateField('projectPreset', newProjectPreset);
+    
+    // Check if there are any errors
+    if (nameErrors.projectName || presetErrors.projectPreset) {
+      this.setState({
+        formTouched: {
+          projectName: true,
+          projectPreset: true
+        }
+      });
       return;
     }
     
-    const { newProjectName, newProjectType, newProjectDescription, projects } = this.state;
-    
-    // Create a new project
+    // Create new project
     const newProject: Project = {
-      id: Date.now().toString(), // Generate a simple unique ID
-      name: newProjectName,
-      type: newProjectType as 'image' | 'video' | 'node',
+      id: `project-${Date.now()}`,
+      name: newProjectName.trim(),
       description: newProjectDescription,
       createdAt: new Date().toISOString(),
-      lastModified: new Date().toISOString()
+      lastModified: new Date().toISOString(),
+      presetId: newProjectPreset
     };
     
-    // Update projects list and set as current project
-    const updatedProjects = [...projects, newProject];
-    
-    this.setState({
-      projects: updatedProjects,
+    // Add to projects list
+    this.setState(prevState => ({
+      projects: [...prevState.projects, newProject],
       currentProject: newProject,
-      newProjectDialogOpen: false
-    });
-    
-    this.showNotification(`Project "${newProject.name}" created successfully!`, 'success');
-    
-    // Update the UI based on project type
-    let targetTab = 0;
-    switch (newProjectType) {
-      case 'image':
-        targetTab = 0; // Image Workspace
-        break;
-      case 'video':
-        targetTab = 1; // Video Workspace
-        break;
-      case 'node':
-        targetTab = 2; // Node Editor
-        break;
-      default:
-        targetTab = 0;
-    }
-    
-    // Navigate to the appropriate tab
-    this.setState({ currentTab: targetTab });
+      newProjectDialogOpen: false,
+      newProjectName: '',
+      newProjectPreset: '',
+      newProjectDescription: '',
+      snackbarOpen: true,
+      snackbarMessage: 'Project created successfully!',
+      snackbarSeverity: 'success',
+      errors: {},
+      formTouched: {
+        projectName: false,
+        projectPreset: false
+      }
+    }));
   }
 
   renderNewProjectDialog() {
     const { 
       newProjectDialogOpen, 
       newProjectName, 
-      newProjectType, 
+      newProjectPreset,
       newProjectDescription,
       errors,
-      formTouched
+      formTouched,
+      systemPresets,
+      userPresets
     } = this.state;
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      const newErrors = this.validateField('projectName', value);
       
+      // Update the state immediately without validation
       this.setState({ 
         newProjectName: value,
-        formTouched: { ...formTouched, projectName: true },
-        errors: { ...errors, ...newErrors }
+        formTouched: { ...formTouched, projectName: true }
       });
+      
+      // Debounce the validation
+      this.debouncedValidateProjectName(value);
     };
 
-    const handleTypeChange = (e: SelectChangeEvent) => {
+    const handlePresetChange = (e: SelectChangeEvent) => {
       const value = e.target.value;
-      const newErrors = this.validateField('projectType', value);
+      const newErrors = this.validateField('projectPreset', value);
       
       this.setState({ 
-        newProjectType: value as any,
-        formTouched: { ...formTouched, projectType: true },
+        newProjectPreset: value,
+        formTouched: { ...formTouched, projectPreset: true },
         errors: { ...errors, ...newErrors }
       });
     };
+    
+    // Combine all presets for the dropdown
+    const allPresets = [
+      ...(systemPresets.map(preset => ({...preset, isSystem: true}))),
+      ...(userPresets.map(preset => ({...preset, isSystem: false})))
+    ];
     
     return (
       <Dialog 
@@ -416,6 +556,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
                 required
                 error={formTouched.projectName && Boolean(errors.projectName)}
                 helperText={formTouched.projectName && errors.projectName}
+                inputRef={this.projectNameInputRef}
               />
             </Grid>
             
@@ -423,24 +564,45 @@ export class MainView extends Component<MainViewProps, MainViewState> {
               <FormControl 
                 fullWidth 
                 required 
-                error={formTouched.projectType && Boolean(errors.projectType)}
+                error={formTouched.projectPreset && Boolean(errors.projectPreset)}
               >
-                <InputLabel id="project-type-label">Project Type</InputLabel>
+                <InputLabel id="project-preset-label">Workflow Preset</InputLabel>
                 <Select
-                  labelId="project-type-label"
-                  value={newProjectType}
-                  label="Project Type"
-                  onChange={handleTypeChange}
-                  onBlur={() => this.setState({ formTouched: { ...formTouched, projectType: true } })}
+                  labelId="project-preset-label"
+                  value={newProjectPreset}
+                  label="Workflow Preset"
+                  onChange={handlePresetChange}
+                  onBlur={() => this.setState({ formTouched: { ...formTouched, projectPreset: true } })}
                 >
-                  <MenuItem value="image">Image Generation</MenuItem>
-                  <MenuItem value="video">Video Generation</MenuItem>
-                  <MenuItem value="node">Node-based Workflow</MenuItem>
+                  {/* System presets */}
+                  {systemPresets.length > 0 && (
+                    <>
+                      <ListSubheader>System Presets</ListSubheader>
+                      {systemPresets.map(preset => (
+                        <MenuItem key={preset.id} value={preset.id}>
+                          {preset.name}
+                        </MenuItem>
+                      ))}
+                    </>
+                  )}
+                  
+                  {/* User-defined presets */}
+                  {userPresets.length > 0 && (
+                    <>
+                      <Divider sx={{ my: 1 }} />
+                      <ListSubheader>User-Defined Presets</ListSubheader>
+                      {userPresets.map(preset => (
+                        <MenuItem key={preset.id} value={preset.id}>
+                          {preset.name}
+                        </MenuItem>
+                      ))}
+                    </>
+                  )}
                 </Select>
                 <FormHelperText>
-                  {formTouched.projectType && errors.projectType ? 
-                    errors.projectType : 
-                    'Select the type of project you want to create'}
+                  {formTouched.projectPreset && errors.projectPreset ?
+                    errors.projectPreset :
+                    'Select a workflow preset for your project'}
                 </FormHelperText>
               </FormControl>
             </Grid>
@@ -475,23 +637,10 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   }
 
   renderLoadProjectDialog() {
-    const { loadProjectDialogOpen, projects, selectedProjectId } = this.state;
+    const { loadProjectDialogOpen, selectedProjectId, projects } = this.state;
     
-    // Format date for display
-    const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    };
-    
-    // Get the type icon based on project type
-    const getTypeIcon = (type: string) => {
-      switch(type) {
-        case 'image': return '🖼️';
-        case 'video': return '🎬';
-        case 'node': return '🔄';
-        default: return '📄';
-      }
-    };
+    // Group projects by preset type for better organization
+    const userProjects = projects.filter(project => project.presetId);
     
     return (
       <Dialog
@@ -509,79 +658,61 @@ export class MainView extends Component<MainViewProps, MainViewState> {
           pb: 2
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <FolderIcon sx={{ mr: 1 }} />
+            <FolderOpenIcon sx={{ mr: 1 }} />
             Load Project
           </Box>
-          <IconButton onClick={this.handleLoadProjectDialogClose} size="small">
+          <IconButton edge="end" onClick={this.handleLoadProjectDialogClose}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         
         <DialogContent sx={{ pt: 3 }}>
-          {projects.length === 0 ? (
-            <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
-              No projects available. Create a new project first.
-            </Typography>
+          <Typography variant="h6" gutterBottom>
+            User Projects
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Select a project to load or create a new one based on any preset.
+          </Typography>
+          
+          {userProjects.length === 0 ? (
+            <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'background.default' }}>
+              <Typography color="text.secondary">
+                No saved projects found. Create a new project to get started.
+              </Typography>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                startIcon={<AddIcon />}
+                onClick={this.handleNewProjectDialogOpen}
+                sx={{ mt: 2 }}
+              >
+                Create New Project
+              </Button>
+            </Paper>
           ) : (
-            <List sx={{ width: '100%' }}>
-              {projects.map((project) => (
-                <React.Fragment key={project.id}>
-                  <Box
-                    sx={{
-                      mb: 1,
-                      position: 'relative',
-                    }}
-                  >
-                    <Button 
-                      fullWidth
-                      variant={selectedProjectId === project.id ? "contained" : "text"}
-                      color="primary"
-                      onClick={() => this.handleProjectSelect(project.id)}
-                      sx={{ 
-                        justifyContent: 'flex-start',
-                        textAlign: 'left',
-                        py: 2,
-                        px: 3,
-                        borderRadius: 1
-                      }}
-                    >
-                      <Box sx={{ width: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Typography variant="subtitle1" component="span">
-                            {getTypeIcon(project.type)} {project.name}
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" component="span" color="text.secondary">
-                          {project.description || 'No description'}
-                        </Typography>
-                        <Box sx={{ display: 'flex', mt: 1 }}>
-                          <Typography variant="caption" sx={{ mr: 2 }}>
-                            Created: {formatDate(project.createdAt)}
-                          </Typography>
-                          <Typography variant="caption">
-                            Modified: {formatDate(project.lastModified)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Button>
-                    <IconButton 
-                      edge="end" 
-                      aria-label="delete"
-                      onClick={() => this.handleDeleteProject(project.id)}
-                      sx={{
-                        position: 'absolute',
-                        right: 8,
-                        top: 8,
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                  <Divider component="li" />
-                </React.Fragment>
-              ))}
-            </List>
+            <Box sx={{ mb: 3 }}>
+              {this.renderProjectList()}
+            </Box>
           )}
+          
+          <Divider sx={{ my: 3 }} />
+          
+          <Typography variant="h6" gutterBottom>
+            Create New Project
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Start a new project based on any preset.
+          </Typography>
+          
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<AddIcon />}
+            onClick={this.handleNewProjectDialogOpen}
+            fullWidth
+          >
+            Create New Project
+          </Button>
         </DialogContent>
         
         <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}>
@@ -592,7 +723,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
             onClick={this.handleLoadSelectedProject}
             disabled={!selectedProjectId}
           >
-            Load Project
+            Load Selected Project
           </Button>
         </DialogActions>
       </Dialog>
@@ -674,272 +805,99 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     );
   }
 
-  renderImageWorkspace() {
-    return (
-      <Grid container spacing={3}>
-        {/* Progress Panel */}
-        {this.state.progress && this.state.progress.status && (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6">Progress</Typography>
-              <Typography>{this.state.progress.status}</Typography>
-            </Paper>
-          </Grid>
-        )}
-        
-        {/* Node Editor Panel */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader 
-              title="Image Parameters" 
-              sx={{ 
-                bgcolor: 'background.paper', 
-                borderBottom: 1, 
-                borderColor: 'divider' 
-              }}
-            />
-            <CardContent sx={{ height: 400 }}>
-              <Typography>Image generation parameters will be displayed here</Typography>
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2">Prompt</Typography>
-                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                  <Typography variant="body2">Enter your prompt here...</Typography>
-                </Paper>
-              </Box>
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2">Settings</Typography>
-                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                  <Typography variant="body2">Image settings will go here</Typography>
-                </Paper>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        {/* Preview Panel */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader 
-              title="Image Preview" 
-              sx={{ 
-                bgcolor: 'background.paper', 
-                borderBottom: 1, 
-                borderColor: 'divider' 
-              }}
-            />
-            <CardContent sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Paper 
-                sx={{ 
-                  width: '100%', 
-                  height: '320px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  bgcolor: 'background.default'
-                }}
-              >
-                <Typography color="text.secondary">Preview will appear here</Typography>
-              </Paper>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        {/* Properties Panel */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader 
-              title="Generation Options" 
-              sx={{ 
-                bgcolor: 'background.paper', 
-                borderBottom: 1, 
-                borderColor: 'divider' 
-              }}
-            />
-            <CardContent sx={{ height: 400 }}>
-              <Typography>Advanced options will be shown here</Typography>
-              <Box sx={{ mt: 2 }}>
-                <Button variant="contained" color="primary" fullWidth>
-                  Generate Image
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        {/* Results Section */}
-        {this.state.results && this.state.results.images && (
-          <Grid item xs={12}>
-            <Card>
-              <CardHeader title="Generated Images" />
-              <CardContent>
-                <Grid container spacing={2}>
-                  {this.state.results.images.map((image: any, index: number) => (
-                    <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
-                      <img 
-                        src={image.url} 
-                        alt={`Generated ${index + 1}`} 
-                        style={{ width: '100%', borderRadius: 8 }}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    );
-  }
-
-  renderVideoWorkspace() {
-    return (
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader 
-              title="Video Parameters" 
-              sx={{ 
-                bgcolor: 'background.paper', 
-                borderBottom: 1, 
-                borderColor: 'divider' 
-              }}
-            />
-            <CardContent sx={{ height: 400 }}>
-              <Typography>Video generation parameters go here</Typography>
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2">Prompt</Typography>
-                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                  <Typography variant="body2">Enter your video prompt here...</Typography>
-                </Paper>
-              </Box>
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2">Duration</Typography>
-                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
-                  <Typography variant="body2">Set video length and fps</Typography>
-                </Paper>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader 
-              title="Video Preview" 
-              sx={{ 
-                bgcolor: 'background.paper', 
-                borderBottom: 1, 
-                borderColor: 'divider' 
-              }}
-            />
-            <CardContent sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Paper 
-                sx={{ 
-                  width: '100%', 
-                  height: '320px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  bgcolor: 'background.default'
-                }}
-              >
-                <Typography color="text.secondary">Video preview will appear here</Typography>
-              </Paper>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader 
-              title="Video Options" 
-              sx={{ 
-                bgcolor: 'background.paper', 
-                borderBottom: 1, 
-                borderColor: 'divider' 
-              }}
-            />
-            <CardContent sx={{ height: 400 }}>
-              <Typography>Advanced video settings</Typography>
-              <Box sx={{ mt: 2 }}>
-                <Button variant="contained" color="primary" fullWidth>
-                  Generate Video
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    );
-  }
-
-  renderNodeEditor() {
-    return (
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Card sx={{ height: '600px' }}>
-            <CardHeader 
-              title="Node Graph Editor" 
-              sx={{ 
-                bgcolor: 'background.paper', 
-                borderBottom: 1, 
-                borderColor: 'divider' 
-              }}
-            />
-            <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <Paper 
-                sx={{ 
-                  flexGrow: 1,
-                  width: '100%', 
-                  bgcolor: 'background.default',
-                  p: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <Typography color="text.secondary">Node editor canvas will be implemented here</Typography>
-              </Paper>
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                <Button variant="outlined">Add Node</Button>
-                <Button variant="contained" color="primary">Run Workflow</Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    );
-  }
-
-  renderPresets() {
-    return (
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="h6">Preset Templates</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Select from pre-configured templates to quickly start your project
+  renderWorkspace() {
+    const { currentTab, currentProject } = this.state;
+    
+    if (!currentProject) {
+      return (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          height: '100%',
+          p: 3
+        }}>
+          <Typography variant="h5" gutterBottom>
+            No Project Selected
+          </Typography>
+          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+            Create a new project or load an existing one to get started.
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            <Button 
+              variant="contained" 
+              startIcon={<AddIcon />}
+              onClick={this.handleNewProjectDialogOpen}
+            >
+              Create New Project
+            </Button>
+            <Button 
+              variant="outlined"
+              startIcon={<FolderOpenIcon />}
+              onClick={this.handleLoadProjectDialogOpen}
+            >
+              Load Project
+            </Button>
+          </Stack>
+        </Box>
+      );
+    }
+    
+    // Determine which workspace to show based on the selected preset
+    // We'll use the presetId to determine the appropriate workspace
+    const presetId = currentProject.presetId || '';
+    
+    // For now, we'll just show a placeholder based on the tab
+    switch (currentTab) {
+      case 0: // Image Workspace
+        return (
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Image Workspace
             </Typography>
-          </Paper>
-        </Grid>
-        
-        {[1, 2, 3, 4, 5, 6].map((preset) => (
-          <Grid item xs={12} sm={6} md={4} key={preset}>
-            <Card>
-              <CardHeader title={`Preset ${preset}`} />
-              <CardContent>
-                <Typography variant="body2">
-                  A pre-configured template with optimized settings for specific types of generation.
-                </Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Button variant="outlined" fullWidth>Use Template</Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    );
+            <Typography variant="body1">
+              Working on project: {currentProject.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Preset ID: {presetId}
+            </Typography>
+            {/* Image workspace components would go here */}
+          </Box>
+        );
+      case 1: // Video Workspace
+        return (
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Video Workspace
+            </Typography>
+            <Typography variant="body1">
+              Working on project: {currentProject.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Preset ID: {presetId}
+            </Typography>
+            {/* Video workspace components would go here */}
+          </Box>
+        );
+      case 2: // Node Editor
+        return (
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Node Editor
+            </Typography>
+            <Typography variant="body1">
+              Working on project: {currentProject.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Preset ID: {presetId}
+            </Typography>
+            {/* Node editor components would go here */}
+          </Box>
+        );
+      default:
+        return null;
+    }
   }
 
   renderTabContent() {
@@ -947,10 +905,10 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     
     const tabContent = (() => {
       switch (currentTab) {
-        case 0: return this.renderImageWorkspace();
-        case 1: return this.renderVideoWorkspace();
-        case 2: return this.renderNodeEditor();
-        case 3: return this.renderPresets();
+        case 0: return this.renderWorkspace();
+        case 1: return this.renderWorkspace();
+        case 2: return this.renderWorkspace();
+        case 3: return this.renderWorkspace();
         default: return null;
       }
     })();
@@ -1081,26 +1039,26 @@ export class MainView extends Component<MainViewProps, MainViewState> {
       {
         id: '1',
         name: 'Landscape Generation',
-        type: 'image',
         description: 'Photorealistic landscape generation with mountains and water',
         createdAt: '2023-02-10T12:30:00Z',
-        lastModified: '2023-02-12T16:45:00Z'
+        lastModified: '2023-02-15T14:20:00Z',
+        presetId: 'landscape-preset'
       },
       {
         id: '2',
         name: 'Sci-Fi Character Animation',
-        type: 'video',
         description: 'Futuristic character with glowing elements in motion',
         createdAt: '2023-02-08T09:15:00Z',
-        lastModified: '2023-02-08T14:20:00Z'
+        lastModified: '2023-02-12T11:45:00Z',
+        presetId: 'scifi-preset'
       },
       {
         id: '3',
         name: 'Abstract Art Generator',
-        type: 'node',
         description: 'Node-based workflow for generating abstract art patterns',
         createdAt: '2023-02-05T10:00:00Z',
-        lastModified: '2023-02-07T11:30:00Z'
+        lastModified: '2023-02-11T16:30:00Z',
+        presetId: 'abstract-preset'
       }
     ];
   }
@@ -1131,7 +1089,7 @@ export class MainView extends Component<MainViewProps, MainViewState> {
   }
 
   handleLoadSelectedProject() {
-    const { selectedProjectId, projects } = this.state;
+    const { projects, selectedProjectId } = this.state;
     
     if (!selectedProjectId) {
       this.showNotification('Please select a project to load', 'warning');
@@ -1141,31 +1099,30 @@ export class MainView extends Component<MainViewProps, MainViewState> {
     const selectedProject = projects.find(project => project.id === selectedProjectId);
     
     if (selectedProject) {
-      // Set the selected project as current
-      this.setState({ 
+      this.setState({
         currentProject: selectedProject,
-        loadProjectDialogOpen: false
+        loadProjectDialogOpen: false,
+        snackbarOpen: true,
+        snackbarMessage: `Project "${selectedProject.name}" loaded successfully!`,
+        snackbarSeverity: 'success'
       });
       
-      this.showNotification(`Project "${selectedProject.name}" loaded successfully!`, 'success');
-      
-      // Navigate to the appropriate tab based on project type
+      // Determine which tab to navigate to based on the preset
       let targetTab = 0;
-      switch (selectedProject.type) {
-        case 'image':
-          targetTab = 0; // Image Workspace
-          break;
-        case 'video':
-          targetTab = 1; // Video Workspace
-          break;
-        case 'node':
-          targetTab = 2; // Node Editor
-          break;
-        default:
-          targetTab = 0;
+      
+      // Use presetId to determine the appropriate tab
+      const presetId = selectedProject.presetId || '';
+      
+      if (presetId.includes('image')) {
+        targetTab = 0; // Image Workspace
+      } else if (presetId.includes('video')) {
+        targetTab = 1; // Video Workspace
+      } else {
+        targetTab = 2; // Node Editor
       }
       
-      this.setState({ currentTab: targetTab });
+      // Navigate to the appropriate tab
+      this.handleTabChange(null as any, targetTab);
     } else {
       this.showNotification('Error loading project', 'error');
     }
@@ -1201,27 +1158,162 @@ export class MainView extends Component<MainViewProps, MainViewState> {
 
   // Delete Project method
   handleDeleteProject(projectId: string) {
-    const { projects, currentProject } = this.state;
+    const { projects } = this.state;
     
-    // Remove the project from the list
+    // Filter out the project to delete
     const updatedProjects = projects.filter(project => project.id !== projectId);
     
-    // Update current project if it was deleted
-    let updatedCurrentProject = currentProject;
-    if (currentProject && currentProject.id === projectId) {
-      updatedCurrentProject = null;
-    }
-    
-    this.setState({ 
+    this.setState({
       projects: updatedProjects,
-      currentProject: updatedCurrentProject
+      // If the current project is being deleted, set it to null
+      currentProject: this.state.currentProject?.id === projectId ? null : this.state.currentProject
     });
     
-    this.showNotification('Project deleted successfully!', 'success');
+    // Show notification
+    this.setState({
+      snackbarOpen: true,
+      snackbarMessage: 'Project deleted successfully',
+      snackbarSeverity: 'success'
+    });
   }
 
   // Snackbar close handler
   handleCloseSnackbar() {
     this.setState({ snackbarOpen: false });
+  }
+
+  // Add missing methods for dialog handling
+  handleNewProjectDialogOpen = () => {
+    this.setState({
+      newProjectDialogOpen: true,
+      newProjectName: '',
+      newProjectPreset: '',
+      newProjectDescription: '',
+      errors: {},
+      formTouched: {
+        projectName: false,
+        projectPreset: false
+      }
+    });
+  };
+
+  handleLoadProjectDialogOpen = () => {
+    this.setState({
+      loadProjectDialogOpen: true,
+      selectedProjectId: null
+    });
+  };
+
+  renderProjectList() {
+    const { projects, selectedProjectId } = this.state;
+    
+    return (
+      <List sx={{ width: '100%' }}>
+        {projects.map((project) => (
+          <ListItem
+            key={project.id}
+            disablePadding
+            secondaryAction={
+              <IconButton edge="end" aria-label="delete" onClick={() => this.handleDeleteProject(project.id)}>
+                <DeleteIcon />
+              </IconButton>
+            }
+          >
+            <ListItemButton
+              selected={selectedProjectId === project.id}
+              onClick={() => this.handleSelectProject(project.id)}
+            >
+              <ListItemAvatar>
+                <Avatar>
+                  {/* Use different icons based on preset */}
+                  {project.presetId && project.presetId.includes('image') ? (
+                    <ImageIcon />
+                  ) : project.presetId && project.presetId.includes('video') ? (
+                    <VideocamIcon />
+                  ) : (
+                    <AccountTreeIcon />
+                  )}
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={project.name}
+                secondary={
+                  <React.Fragment>
+                    <Typography
+                      sx={{ display: 'inline' }}
+                      component="span"
+                      variant="body2"
+                      color="text.primary"
+                    >
+                      {/* Display preset name instead of type */}
+                      {this.getPresetNameById(project.presetId || '')}
+                    </Typography>
+                    {` — ${project.description}`}
+                  </React.Fragment>
+                }
+              />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    );
+  }
+
+  // Helper method to get preset name by ID
+  getPresetNameById(presetId: string): string {
+    const { systemPresets, userPresets } = this.state;
+    
+    // Check system presets
+    const systemPreset = systemPresets.find(preset => preset.id === presetId);
+    if (systemPreset) return systemPreset.name;
+    
+    // Check user presets
+    const userPreset = userPresets.find(preset => preset.id === presetId);
+    if (userPreset) return userPreset.name;
+    
+    // Default fallback
+    return "Unknown Preset";
+  }
+
+  // Add missing method for selecting a project
+  handleSelectProject = (projectId: string) => {
+    this.setState({
+      selectedProjectId: projectId
+    });
+  };
+
+  // Helper function to get icon based on preset ID
+  getPresetIcon(presetId: string | undefined) {
+    if (!presetId) return <AccountTreeIcon />;
+    
+    if (presetId.includes('image')) {
+      return <ImageIcon />;
+    } else if (presetId.includes('video')) {
+      return <VideocamIcon />;
+    } else {
+      return <AccountTreeIcon />;
+    }
+  }
+
+  renderLoadProjectItem(project: Project) {
+    return (
+      <MenuItem 
+        key={project.id} 
+        value={project.id}
+        sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          py: 1
+        }}
+      >
+        <ListItemIcon>
+          {this.getPresetIcon(project.presetId)}
+        </ListItemIcon>
+        {project.name}
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+          {new Date(project.lastModified).toLocaleDateString()}
+        </Typography>
+      </MenuItem>
+    );
   }
 } 
