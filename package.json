@@ -71,6 +71,7 @@
     "callbag-from-obs": "^1.2.0",
     "callbag-to-obs": "^1.0.0",
     "recharts": "^2.15.1",
+    "rxjs": "^7.8.2",
     "xstream": "^11.14.0"
   },
   "devDependencies": {
@@ -80,6 +81,7 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@types/jest": "^29.5.14",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^18.19.76",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
