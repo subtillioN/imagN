@@ -1182,3 +1182,118 @@ html, body, #root {
   color: var(--text-light);
   opacity: 0.7;
 }
+
+/* DevTools Panel Styles */
+.devtools-panel {
+  background-color: var(--background-dark);
+  color: var(--text-light);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family);
+}
+
+.devtools-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.devtools-header h2 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+}
+
+.devtools-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.devtools-tab {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: none;
+  color: var(--text-light);
+  opacity: 0.7;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.devtools-tab:hover {
+  opacity: 0.9;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.devtools-tab.active {
+  opacity: 1;
+  background-color: var(--primary-color);
+}
+
+.devtools-content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--spacing-md);
+}
+
+.devtools-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.devtools-hint {
+  color: var(--text-light);
+  opacity: 0.6;
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.devtools-selected-component {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-md);
+}
+
+.devtools-selected-component h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+.devtools-component-details {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.devtools-props-list {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.devtools-prop-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+}
+
+.devtools-prop-name {
+  color: #64b5f6;
+  font-family: monospace;
+}
+
+.devtools-prop-type {
+  color: #81c784;
+  font-family: monospace;
+}
+
+.devtools-prop-updates {
+  color: #ff8a65;
+  text-align: right;
+}

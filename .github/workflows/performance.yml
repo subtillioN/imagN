@@ -1,0 +1,76 @@
+name: Performance Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build
+
+    - name: Run performance tests
+      run: npm run test:performance
+
+    - name: Check performance budgets
+      run: node scripts/check-performance-budgets.js
+
+    - name: Upload performance report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-report
+        path: performance-report.json
+
+    - name: Comment PR with performance results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('performance-report.json', 'utf8'));
+          
+          const formatMetric = (value, unit) => {
+            return `\`${value.toFixed(2)}${unit}\``;
+          };
+          
+          const comment = `## Performance Test Results
+          
+          ### Metrics
+          - Analysis Time: ${formatMetric(report.metrics.analysisTime, 'ms')}
+          - Memory Usage: ${formatMetric(report.metrics.memoryUsage / 1024 / 1024, 'MB')}
+          - Component Count: ${report.metrics.componentCount}
+          - Prop Count: ${report.metrics.propCount}
+          - Update Frequency: ${report.metrics.updateFrequency} updates/s
+          
+          ### Budget Status: ${report.status}
+          ${report.violations.length > 0 ? `
+          #### Violations
+          ${report.violations.map(v => `- ❌ ${v}`).join('\n')}
+          ` : '✅ All performance budgets passed'}
+          
+          [View full report](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          }); 
