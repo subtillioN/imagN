@@ -12,24 +12,32 @@ jest.mock('recharts', () => ({
 const mockData = {
   components: [{
     componentName: 'TestComponent',
-    props: {
-      prop1: {
-        updateCount: 10,
-        renderImpact: 25,
-        lastValue: 'test',
+    props: [
+      {
+        name: 'prop1',
         type: 'string',
+        required: true,
+        usageCount: 10,
+        valueChanges: 25,
+        lastValue: 'test',
       },
-      prop2: {
-        updateCount: 5,
-        renderImpact: 15,
-        lastValue: 42,
+      {
+        name: 'prop2',
         type: 'number',
+        required: false,
+        usageCount: 5,
+        valueChanges: 15,
+        lastValue: 42,
       },
-    },
+    ],
   }],
   unusedProps: [],
   propPatterns: [],
-  frequentUpdates: ['TestComponent.prop1'],
+  frequentUpdates: [{
+    componentName: 'TestComponent',
+    propName: 'prop1',
+    updateCount: 25,
+  }],
 };
 
 describe('PerformanceImpact', () => {
@@ -46,7 +54,7 @@ describe('PerformanceImpact', () => {
   it('shows performance metrics', () => {
     render(<PerformanceImpact data={mockData} />);
     expect(screen.getByText('Total Updates')).toBeInTheDocument();
-    expect(screen.getByText('15')).toBeInTheDocument(); // Sum of update counts
+    expect(screen.getByText('15')).toBeInTheDocument(); // Sum of usage counts
     expect(screen.getByText('High Impact Props')).toBeInTheDocument();
   });
 
@@ -91,13 +99,13 @@ describe('PerformanceImpact', () => {
       ...mockData,
       components: [{
         componentName: 'TestComponent',
-        props: {
-          ...mockData.components[0].props,
-          prop1: {
-            ...mockData.components[0].props.prop1,
-            updateCount: 20,
+        props: [
+          {
+            ...mockData.components[0].props[0],
+            usageCount: 20,
           },
-        },
+          mockData.components[0].props[1],
+        ],
       }],
     };
 
