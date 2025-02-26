@@ -1,28 +1,69 @@
-import { makeSubject } from 'callbag-subject';
-import { pipe } from 'callbag-pipe';
-import { share } from 'callbag-share';
-import { startWith } from 'callbag-start-with';
+import { createSource } from '../streams/core';
 
 export class BaseComponent {
-  constructor(props = {}) {
-    this.props = props;
+  constructor() {
     this.state = {};
-    this.subject = makeSubject();
-    this.lifecycle = this.setupLifecycle();
-    this.initialize();
+    this.props = {};
+    this.initializeStreams();
   }
 
-  // Lifecycle setup
-  setupLifecycle() {
-    const mount$ = makeSubject();
-    const unmount$ = makeSubject();
-    const update$ = makeSubject();
+  initializeStreams() {
+    this.subject = createSource((sink) => {
+      sink.next(this.state);
+      return () => {};
+    });
 
-    return {
-      mount$: pipe(mount$, share()),
-      unmount$: pipe(unmount$, share()),
-      update$: pipe(update$, share())
+    this.lifecycle = {
+      mount$: createSource((sink) => {
+        let mounted = false;
+        return () => {
+          mounted = false;
+        };
+      }),
+      unmount$: createSource((sink) => {
+        return () => {};
+      }),
+      update$: createSource((sink) => {
+        return () => {};
+      })
     };
+  }
+
+  setState(newState) {
+    this.state = { ...this.state, ...newState };
+    this.subject.source(1, this.state);
+  }
+
+  update(props) {
+    this.props = { ...this.props, ...props };
+    this.lifecycle.update$.source(1, props);
+  }
+
+  mount() {
+    this.lifecycle.mount$.source(1, true);
+  }
+
+  unmount() {
+    this.lifecycle.unmount$.source(1, true);
+  }
+
+  subscribe(observer) {
+    return this.subject.source(0, (type, data) => {
+      if (type === 1) {
+        observer(data);
+      }
+    });
+  }
+
+  subscribeToLifecycle(event, observer) {
+    if (!this.lifecycle[event]) {
+      throw new Error(`Invalid lifecycle event: ${event}`);
+    }
+    return this.lifecycle[event].source(0, (type, data) => {
+      if (type === 1) {
+        observer(data);
+      }
+    });
   }
 
   // Lifecycle hooks
@@ -31,57 +72,30 @@ export class BaseComponent {
     this.onInitialize();
   }
 
-  mount() {
+  onMount() {
     // Called when component is mounted to DOM
-    this.lifecycle.mount$(1)(true);
-    this.onMount();
   }
 
-  unmount() {
+  onUnmount() {
     // Called when component is removed from DOM
-    this.lifecycle.unmount$(1)(true);
-    this.onUnmount();
   }
 
-  update(nextProps) {
-    const prevProps = this.props;
-    this.props = nextProps;
-    this.lifecycle.update$(1)({ prevProps, nextProps });
-    this.onUpdate(prevProps, nextProps);
+  onUpdate(prevProps, nextProps) {
+    // Lifecycle hook implementation
   }
 
-  // Lifecycle hook implementations (to be overridden)
-  onInitialize() {}
-  onMount() {}
-  onUnmount() {}
-  onUpdate(prevProps, nextProps) {}
-
-  // State management
-  setState(nextState) {
-    const prevState = this.state;
-    this.state = { ...this.state, ...nextState };
-    this.subject(1)({ prevState, nextState: this.state });
-  }
-
-  // Stream creation helper
-  createStream(initial = null) {
-    return pipe(
-      this.subject,
-      startWith(initial),
-      share()
-    );
-  }
-
-  // Communication methods
-  emit(eventName, data) {
+  // Communication
+  emit(event, data) {
     if (this.props.onEvent) {
-      this.props.onEvent(eventName, data);
+      this.props.onEvent(event, data);
     }
   }
 
-  // Cleanup method
+  // Cleanup
   dispose() {
     this.unmount();
-    this.subject(2)(); // Complete the subject
+    this.subject.source(0, (type, data) => {
+      if (type === 2) data();
+    });
   }
 }

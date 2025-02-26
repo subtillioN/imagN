@@ -10,109 +10,126 @@ const END = 2;       // Signal to end the stream
 /**
  * Creates a source stream
  * @param {Function} producer Function that produces values
- * @returns {Function} A source callbag
+ * @returns {Object} A stream object with a source method
  */
-export const createSource = (producer) => (start, sink) => {
-  if (start !== START) return;
-  let disposed = false;
-  let cleanup = null;
-  
-  sink(START, (type) => {
-    if (type === END) {
-      disposed = true;
-      if (cleanup) cleanup();
-    }
-  });
-
-  try {
-    cleanup = producer({
-      next: (data) => !disposed && sink(DATA, data),
-      error: (err) => !disposed && sink(END, err),
-      complete: () => !disposed && sink(END)
-    });
-  } catch (error) {
-    sink(END, error);
+export function createSource(producer) {
+  if (typeof producer !== 'function') {
+    producer = () => {};
   }
 
-  return () => {
-    disposed = true;
-    if (cleanup) cleanup();
+  let talkback;
+  let cleanup = null;
+
+  return {
+    source(type, data) {
+      if (type === START) {
+        talkback = data;
+        cleanup = producer({
+          next: (value) => talkback && talkback(DATA, value),
+          error: (err) => talkback && talkback(3, err),
+          complete: () => talkback && talkback(END)
+        }) || (() => {});
+      } else if (type === END) {
+        if (cleanup) {
+          cleanup();
+          cleanup = null;
+        }
+        talkback = null;
+      }
+    }
   };
-};
+}
 
 /**
  * Maps values in a stream using a transform function
  * @param {Function} transform Transform function for values
- * @returns {Function} A transformed stream
+ * @returns {Object} A stream object with a source method
  */
-export const map = (transform) => (source) => (start, sink) => {
-  if (start !== START) return;
-  let disposed = false;
+export const map = (transform) => source => {
+  const sourceFunc = (start, sink) => {
+    if (start !== START) return;
+    let disposed = false;
 
-  source(START, (type, data) => {
-    if (disposed) return;
-    if (type === DATA) {
-      try {
-        sink(type, transform(data));
-      } catch (error) {
-        sink(END, error);
+    source.source(START, (type, data) => {
+      if (disposed) return;
+      if (type === DATA) {
+        try {
+          sink(type, transform(data));
+        } catch (error) {
+          sink(END, error);
+        }
+      } else {
+        sink(type, data);
       }
-    } else {
-      sink(type, data);
-    }
-  });
+    });
 
-  return () => {
-    disposed = true;
+    return () => {
+      disposed = true;
+    };
   };
+
+  return { source: sourceFunc };
 };
 
 /**
  * Filters values in a stream
  * @param {Function} predicate Filter condition
- * @returns {Function} A filtered stream
+ * @returns {Object} A stream object with a source method
  */
-export const filter = (predicate) => (source) => (start, sink) => {
-  if (start !== START) return;
-  let disposed = false;
+export const filter = (predicate) => source => {
+  const sourceFunc = (start, sink) => {
+    if (start !== START) return;
+    let disposed = false;
 
-  source(START, (type, data) => {
-    if (disposed) return;
-    if (type === DATA) {
-      try {
-        if (predicate(data)) sink(type, data);
-      } catch (error) {
-        sink(END, error);
+    source.source(START, (type, data) => {
+      if (disposed) return;
+      if (type === DATA) {
+        try {
+          if (predicate(data)) sink(type, data);
+        } catch (error) {
+          sink(END, error);
+        }
+      } else {
+        sink(type, data);
       }
-    } else {
-      sink(type, data);
-    }
-  });
+    });
 
-  return () => {
-    disposed = true;
+    return () => {
+      disposed = true;
+    };
   };
+
+  return { source: sourceFunc };
 };
 
 /**
  * Combines multiple streams into one
- * @param {...Function} sources Source streams to combine
- * @returns {Function} A combined stream
+ * @param {...Object} sources Stream objects to combine
+ * @returns {Object} A stream object with a source method
  */
-export const combine = (...sources) => (start, sink) => {
-  if (start !== START) return;
-  const n = sources.length;
-  const vals = new Array(n);
-  const hasVal = new Array(n).fill(false);
-  let disposed = false;
-  const cleanups = new Array(n);
+export const combine = (...sources) => {
+  const sourceFunc = (start, sink) => {
+    if (start !== START) return;
+    const n = sources.length;
+    const vals = new Array(n);
+    const hasVal = new Array(n).fill(false);
+    let disposed = false;
+    let completed = 0;
+    const cleanups = new Array(n);
 
-  sources.forEach((source, i) => {
-    if (disposed) return;
+    const checkComplete = () => {
+      if (completed === n && !disposed) {
+        disposed = true;
+        sink(END);
+      }
+    };
 
-    try {
-      cleanups[i] = source(START, (type, data) => {
+    sources.forEach((source, i) => {
+      if (disposed) return;
+
+      cleanups[i] = source.source(START, (type, data) => {
         if (disposed) return;
+        
         if (type === DATA) {
           vals[i] = data;
           hasVal[i] = true;
@@ -120,66 +137,75 @@ export const combine = (...sources) => (start, sink) => {
             sink(DATA, vals.slice());
           }
         } else if (type === END) {
-          disposed = true;
-          sink(END, data);
+          completed++;
+          checkComplete();
         }
       });
-    } catch (error) {
-      disposed = true;
-      sink(END, error);
-    }
-  });
+    });
 
-  return () => {
-    disposed = true;
-    cleanups.forEach(cleanup => cleanup && cleanup());
+    return () => {
+      if (!disposed) {
+        disposed = true;
+        cleanups.forEach(cleanup => cleanup && cleanup());
+      }
+    };
   };
+
+  return { source: sourceFunc };
 };
 
 /**
  * Creates a stream from an array of values
  * @param {Array} values Array of values
- * @returns {Function} A source stream
+ * @returns {Object} A stream object with a source method
  */
-export const fromArray = (values) => (start, sink) => {
-  if (start !== START) return;
-  let disposed = false;
-  
-  try {
-    values.forEach(value => {
-      if (!disposed) sink(DATA, value);
-    });
-    if (!disposed) sink(END);
-  } catch (error) {
-    if (!disposed) sink(END, error);
-  }
+export const fromArray = (values) => {
+  const sourceFunc = (start, sink) => {
+    if (start !== START) return;
+    let disposed = false;
+    
+    try {
+      values.forEach(value => {
+        if (!disposed) sink(DATA, value);
+      });
+      if (!disposed) sink(END);
+    } catch (error) {
+      if (!disposed) sink(END, error);
+    }
 
-  return () => {
-    disposed = true;
+    return () => {
+      disposed = true;
+    };
   };
+
+  return { source: sourceFunc };
 };
 
 /**
  * Creates a stream from a promise
  * @param {Promise} promise Promise to create stream from
- * @returns {Function} A source stream
+ * @returns {Object} A stream object with a source method
  */
-export const fromPromise = (promise) => (start, sink) => {
-  if (start !== START) return;
-  let disposed = false;
+export const fromPromise = (promise) => {
+  const sourceFunc = (start, sink) => {
+    if (start !== START) return;
+    let disposed = false;
 
-  promise
-    .then(value => {
-      if (!disposed) {
-        sink(DATA, value);
-        sink(END);
-      }
-    })
-    .catch(error => {
-      if (!disposed) sink(END, error);
-    });
+    promise
+      .then(value => {
+        if (!disposed) {
+          sink(DATA, value);
+          sink(END);
+        }
+      })
+      .catch(error => {
+        if (!disposed) sink(END, error);
+      });
 
-  return () => {
-    disposed = true;
+    return () => {
+      disposed = true;
+    };
   };
+
+  return { source: sourceFunc };
 };

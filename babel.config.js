@@ -1,9 +1,11 @@
-const config = {
+module.exports = {
   presets: [
     ['@babel/preset-env', { targets: { node: 'current' } }],
+    '@babel/preset-typescript',
     ['@babel/preset-react', { runtime: 'automatic' }]
   ],
-  plugins: []
+  plugins: [
+    '@babel/plugin-transform-runtime',
+    '@babel/plugin-proposal-class-properties'
+  ]
 };
-
-module.exports = config;

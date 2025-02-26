@@ -1,0 +1,18 @@
+{
+  "profileName": "default",
+  "loadedAt": "2025-02-26T04:08:38.798Z",
+  "context": {
+    "name": "Default Context",
+    "description": "Default working context for ImagN development",
+    "files": [
+      "src/components/MainView.tsx",
+      "src/services/workflowPresets.js",
+      "src/services/workflowStorage.js"
+    ],
+    "concepts": [
+      "workflow_preset_system",
+      "project_management",
+      "reactive_programming"
+    ]
+  }
+}

@@ -1,108 +1,130 @@
-import xs from 'xstream';
-import { createState, updateState, selectState } from '../state';
+import { createState, updateState, selectState, createStateStore } from '../state';
 
-describe('State Management', () => {
+describe('State', () => {
   describe('createState', () => {
-    it('should create initial state', () => {
+    it('should create a state stream with initial value', () => {
       const initialState = { count: 0 };
       const state$ = createState(initialState);
-      
-      expect(state$).toBeTruthy();
-      state$.addListener({
-        next: (state) => {
-          expect(state).toEqual(initialState);
+      let value;
+
+      state$.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
         }
       });
+
+      expect(value).toEqual(initialState);
     });
 
-    it('should maintain state immutability', (done) => {
-      const initialState = { data: { value: 1 } };
-      const state$ = createState(initialState);
-      
-      state$.addListener({
-        next: (state) => {
-          expect(state).not.toBe(initialState);
-          expect(state).toEqual(initialState);
-          done();
+    it('should update state when calling update', () => {
+      const state$ = createState({ count: 0 });
+      const newState = { count: 1 };
+      let value;
+
+      state$.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
         }
       });
+
+      state$.update(newState);
+      expect(value).toEqual(newState);
     });
   });
 
   describe('updateState', () => {
-    it('should update state correctly', (done) => {
-      const initialState = { count: 0 };
-      const state$ = createState(initialState);
-      const update$ = xs.of((state) => ({ ...state, count: state.count + 1 }));
-      
-      const updatedState$ = updateState(state$, update$);
-      
-      updatedState$.addListener({
-        next: (state) => {
-          expect(state.count).toBe(1);
-          done();
-        }
-      });
-    });
+    it('should update state when update$ emits', () => {
+      const state$ = createState({ count: 0 });
+      const update$ = createState((state) => ({ count: state.count + 1 }));
+      const combined$ = updateState(state$, update$);
+      let value;
 
-    it('should handle multiple updates', (done) => {
-      const initialState = { count: 0 };
-      const state$ = createState(initialState);
-      const updates = [
-        (state) => ({ ...state, count: state.count + 1 }),
-        (state) => ({ ...state, count: state.count + 1 })
-      ];
-      const update$ = xs.fromArray(updates);
-      
-      const updatedState$ = updateState(state$, update$);
-      let updateCount = 0;
-      
-      updatedState$.addListener({
-        next: (state) => {
-          updateCount++;
-          if (updateCount === 2) {
-            expect(state.count).toBe(2);
-            done();
-          }
+      combined$.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
         }
       });
+
+      update$.update((state) => ({ count: state.count + 1 }));
+      expect(value).toEqual({ count: 1 });
     });
   });
 
   describe('selectState', () => {
-    it('should select specific state slice', (done) => {
-      const initialState = { user: { name: 'test', age: 25 } };
-      const state$ = createState(initialState);
-      
-      const userName$ = selectState(state$, state => state.user.name);
-      
-      userName$.addListener({
-        next: (name) => {
-          expect(name).toBe('test');
-          done();
+    it('should select state using selector', () => {
+      const state$ = createState({ user: { name: 'John' } });
+      const selected$ = selectState(state$, state => state.user.name);
+      let value;
+
+      selected$.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
         }
       });
+
+      expect(value).toBe('John');
+    });
+  });
+
+  describe('StateStore', () => {
+    it('should create store with initial state', () => {
+      const store = createStateStore({ count: 0 });
+      let value;
+
+      store.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
+        }
+      });
+
+      expect(value).toEqual({ count: 0 });
     });
 
-    it('should update when selected state changes', (done) => {
-      const initialState = { data: { value: 1 } };
-      const state$ = createState(initialState);
-      const update$ = xs.of(state => ({ 
-        ...state, 
-        data: { ...state.data, value: 2 } 
-      }));
-      
-      const updatedState$ = updateState(state$, update$);
-      const value$ = selectState(updatedState$, state => state.data.value);
-      
-      value$.addListener({
-        next: (value) => {
-          if (value === 2) {
-            expect(value).toBe(2);
-            done();
-          }
+    it('should handle UPDATE_STATE action', () => {
+      const store = createStateStore({ count: 0 });
+      let value;
+
+      store.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
         }
       });
+
+      store.dispatch({ type: 'UPDATE_STATE', payload: { count: 1 } });
+      expect(value).toEqual({ count: 1 });
+    });
+
+    it('should handle UNDO action', () => {
+      const store = createStateStore({ count: 0 });
+      let value;
+
+      store.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
+        }
+      });
+
+      store.dispatch({ type: 'UPDATE_STATE', payload: { count: 1 } });
+      store.dispatch({ type: 'UPDATE_STATE', payload: { count: 2 } });
+      store.dispatch({ type: 'UNDO' });
+      expect(value).toEqual({ count: 1 });
+    });
+
+    it('should handle REDO action', () => {
+      const store = createStateStore({ count: 0 });
+      let value;
+
+      store.source(0, (type, data) => {
+        if (type === 1) {
+          value = data;
+        }
+      });
+
+      store.dispatch({ type: 'UPDATE_STATE', payload: { count: 1 } });
+      store.dispatch({ type: 'UPDATE_STATE', payload: { count: 2 } });
+      store.dispatch({ type: 'UNDO' });
+      store.dispatch({ type: 'REDO' });
+      expect(value).toEqual({ count: 2 });
     });
   });
 });

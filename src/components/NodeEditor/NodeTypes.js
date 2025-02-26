@@ -79,12 +79,14 @@ export const NodeTypes = {
   }
 };
 
+let nodeCounter = 0;
+
 export const createNode = (type, position) => {
   const nodeType = NodeTypes[type];
   if (!nodeType) throw new Error(`Invalid node type: ${type}`);
 
   return {
-    id: `${type}-${Date.now()}`,
+    id: `${type}-${++nodeCounter}`,
     type,
     title: nodeType.title,
     position,

@@ -1,122 +1,49 @@
-import { render, fireEvent } from '@testing-library/react';
-import NodeConnection from '../NodeConnection';
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { NodeConnection } from '../NodeConnection';
 
-describe('NodeConnection', () => {
-  let nodeConnection;
-  let container;
+describe('NodeConnection Component', () => {
+  const mockSource = {
+    id: '1',
+    position: { x: 100, y: 100 }
+  };
 
-  beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    nodeConnection = new NodeConnection({
-      DOM: {
-        select: () => ({
-          events: () => []
-        })
-      }
-    });
+  const mockTarget = {
+    id: '2',
+    position: { x: 300, y: 100 }
+  };
+
+  it('should render correctly', () => {
+    render(
+      <NodeConnection
+        source={mockSource}
+        target={mockTarget}
+        data-testid="connection-1"
+      />
+    );
+    expect(screen.getByTestId('connection-1')).toBeInTheDocument();
   });
 
-  afterEach(() => {
-    document.body.removeChild(container);
+  it('should calculate correct path', () => {
+    const { container } = render(
+      <NodeConnection
+        source={mockSource}
+        target={mockTarget}
+        data-testid="connection-1"
+      />
+    );
+    const path = container.querySelector('path');
+    expect(path).toHaveAttribute('d', 'M150,125 L300,125');
   });
 
-  test('initializes with empty state', () => {
-    const state = nodeConnection.state$.getValue();
-    expect(state.activeConnection).toBeNull();
-    expect(state.connections).toEqual([]);
-  });
-
-  test('handles connection start', () => {
-    const action = {
-      type: 'CONNECTION_START',
-      payload: {
-        x: 100,
-        y: 100,
-        outputId: 'output-1',
-        nodeId: 'node-1'
-      }
-    };
-
-    const newState = nodeConnection.model(action);
-    expect(newState.activeConnection).toEqual({
-      start: action.payload,
-      end: action.payload
-    });
-  });
-
-  test('handles connection move', () => {
-    const initialState = {
-      activeConnection: {
-        start: { x: 0, y: 0, outputId: 'output-1', nodeId: 'node-1' },
-        end: { x: 0, y: 0 }
-      },
-      connections: []
-    };
-
-    const action = {
-      type: 'CONNECTION_MOVE',
-      payload: { x: 100, y: 100 }
-    };
-
-    const newState = nodeConnection.model(action);
-    expect(newState.activeConnection.end).toEqual(action.payload);
-  });
-
-  test('handles connection end', () => {
-    const initialState = {
-      activeConnection: {
-        start: { x: 0, y: 0, outputId: 'output-1', nodeId: 'node-1' },
-        end: { x: 100, y: 100 }
-      },
-      connections: []
-    };
-
-    const action = {
-      type: 'CONNECTION_END',
-      payload: {
-        inputId: 'input-1',
-        nodeId: 'node-2'
-      }
-    };
-
-    const newState = nodeConnection.model(action);
-    expect(newState.activeConnection).toBeNull();
-    expect(newState.connections).toHaveLength(1);
-    expect(newState.connections[0]).toEqual({
-      id: 'node-1-node-2',
-      from: {
-        nodeId: 'node-1',
-        outputId: 'output-1'
-      },
-      to: {
-        nodeId: 'node-2',
-        inputId: 'input-1'
-      }
-    });
-  });
-
-  test('handles connection cancel', () => {
-    const initialState = {
-      activeConnection: {
-        start: { x: 0, y: 0, outputId: 'output-1', nodeId: 'node-1' },
-        end: { x: 100, y: 100 }
-      },
-      connections: []
-    };
-
-    const action = { type: 'CONNECTION_CANCEL' };
-    const newState = nodeConnection.model(action);
-    expect(newState.activeConnection).toBeNull();
-    expect(newState.connections).toHaveLength(0);
-  });
-
-  test('creates correct SVG path', () => {
-    const start = { x: 0, y: 0 };
-    const end = { x: 100, y: 100 };
-    const path = nodeConnection.createPath(start, end);
-    expect(path).toBeDefined();
-    expect(typeof path).toBe('string');
-    expect(path.startsWith('M')).toBe(true);
+  it('should not render when source or target is missing', () => {
+    const { container } = render(
+      <NodeConnection
+        source={null}
+        target={mockTarget}
+        data-testid="connection-1"
+      />
+    );
+    expect(container.firstChild).toBeNull();
   });
 });

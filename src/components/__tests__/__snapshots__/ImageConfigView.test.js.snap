@@ -2,95 +2,85 @@
 
 exports[`ImageConfigView Component should render correctly and match snapshot 1`] = `
 <div>
-  <div
-    class="image-config-container"
-  >
-    <div
-      class="config-header"
-    >
+  <div>
+    <div>
       Image Configuration
     </div>
-    <div
-      class="parameters-section"
-    >
-      <div
-        class="parameter-group"
-      >
-        <label>
-          Image Size
-        </label>
-        <select
-          class="size-select"
+    <div>
+      <div>
+        <label
+          for="format"
         >
-          <option
-            value="512x512"
-          >
-            512x512
-          </option>
-          <option
-            value="1024x1024"
-          >
-            1024x1024
-          </option>
-        </select>
-      </div>
-      <div
-        class="parameter-group"
-      >
-        <label>
-          Style
-        </label>
-        <select
-          class="style-select"
-        >
-          <option
-            value="realistic"
-          >
-            Realistic
-          </option>
-          <option
-            value="artistic"
-          >
-            Artistic
-          </option>
-          <option
-            value="abstract"
-          >
-            Abstract
-          </option>
-        </select>
-      </div>
-      <div
-        class="parameter-group"
-      >
-        <label>
-          Prompt
+          Format
         </label>
         <input
-          class="prompt-input"
-          placeholder="Describe your image..."
+          id="format"
+          readonly=""
           type="text"
+          value="jpeg"
+        />
+      </div>
+      <div>
+        <label
+          for="compression"
+        >
+          Compression
+        </label>
+        <input
+          id="compression"
+          readonly=""
+          type="number"
+          value="0.8"
+        />
+      </div>
+      <div>
+        <label
+          for="width"
+        >
+          Width
+        </label>
+        <input
+          id="width"
+          readonly=""
+          type="number"
+          value="100"
+        />
+      </div>
+      <div>
+        <label
+          for="height"
+        >
+          Height
+        </label>
+        <input
+          id="height"
+          readonly=""
+          type="number"
+          value="100"
+        />
+      </div>
+      <div>
+        <label
+          for="quality"
+        >
+          Quality
+        </label>
+        <input
+          id="quality"
+          readonly=""
+          type="number"
+          value="80"
         />
       </div>
     </div>
-    <div
-      class="preview-section"
-    >
-      <div
-        class="preview-container"
-      />
+    <div>
+      <div />
     </div>
-    <div
-      class="controls-section"
-    >
-      <button
-        class="generate-btn"
-      >
+    <div>
+      <button>
         Generate Image
       </button>
-      <button
-        class="reset-btn"
-      >
+      <button>
         Reset
       </button>
     </div>

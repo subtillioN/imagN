@@ -1,8 +1,4 @@
-import { makeSubject } from 'callbag-subject';
-import { pipe } from 'callbag-pipe';
-import { scan } from 'callbag-scan';
-import { share } from 'callbag-share';
-import { map } from 'callbag-map';
+import { createSource } from './core';
 
 // Action Types
 export const StateActionTypes = {
@@ -23,100 +19,107 @@ const initialState = {
 // Create action helper
 export const createStateAction = (type, payload) => ({ type, payload });
 
-// State reducer
-const stateReducer = (state, action) => {
-  switch (action.type) {
-    case StateActionTypes.UPDATE_STATE: {
-      const newState = {
-        current: { ...state.current, ...action.payload },
-        history: [
-          state.current,
-          ...state.history.slice(0, state.maxHistoryLength - 1)
-        ],
-        future: [],
-        maxHistoryLength: state.maxHistoryLength
-      };
-      return newState;
-    }
-    case StateActionTypes.RESET_STATE:
-      return {
-        ...initialState,
-        maxHistoryLength: state.maxHistoryLength
-      };
-    case StateActionTypes.UNDO: {
-      if (state.history.length === 0) return state;
-      return {
-        current: state.history[0],
-        history: state.history.slice(1),
-        future: [state.current, ...state.future],
-        maxHistoryLength: state.maxHistoryLength
-      };
-    }
-    case StateActionTypes.REDO: {
-      if (state.future.length === 0) return state;
-      return {
-        current: state.future[0],
-        history: [state.current, ...state.history],
-        future: state.future.slice(1),
-        maxHistoryLength: state.maxHistoryLength
-      };
-    }
-    default:
-      return state;
-  }
-};
+// Simple state stream creation
+export function createState(initialValue) {
+  let currentState = initialValue;
+  const stream = createSource((sink) => {
+    sink.next(currentState);
+    return () => {};
+  });
+
+  stream.update = (newState) => {
+    currentState = typeof newState === 'function' ? newState(currentState) : newState;
+    stream.source(1, currentState);
+  };
+
+  return stream;
+}
+
+// Update state helper
+export function updateState(state$, update$) {
+  let currentState;
+  const combined$ = createSource((sink) => {
+    const stateSub = state$.source(0, (type, data) => {
+      if (type === 1) {
+        currentState = data;
+        sink.next(currentState);
+      }
+    });
+
+    const updateSub = update$.source(0, (type, data) => {
+      if (type === 1 && typeof data === 'function') {
+        currentState = data(currentState);
+        sink.next(currentState);
+      }
+    });
+
+    return () => {
+      stateSub(2);
+      updateSub(2);
+    };
+  });
+
+  return combined$;
+}
+
+// Select state helper
+export function selectState(state$, selector) {
+  return createSource((sink) => {
+    const sub = state$.source(0, (type, data) => {
+      if (type === 1) {
+        sink.next(selector(data));
+      }
+    });
+    return () => sub(2);
+  });
+}
 
 // Create state store
-export const createStateStore = (initialData = {}) => {
-  const subject = makeSubject();
-  
-  // Initialize state with provided data
-  const initial = {
-    ...initialState,
-    current: initialData
+export function createStateStore(initialValue) {
+  const store = {
+    state: initialValue,
+    history: [],
+    future: [],
+    maxHistoryLength: 50
   };
 
-  // Create state stream with reducer and share it
-  const state$ = pipe(
-    subject,
-    scan(stateReducer, initial),
-    share
-  );
+  const stream = createSource((sink) => {
+    sink.next(store.state);
+    return () => {};
+  });
 
-  // Create selectors for different state slices
-  const current$ = pipe(
-    state$,
-    map(state => state.current)
-  );
+  stream.dispatch = (action) => {
+    switch (action.type) {
+      case StateActionTypes.UPDATE_STATE:
+        store.history.push(store.state);
+        if (store.history.length > store.maxHistoryLength) {
+          store.history.shift();
+        }
+        store.future = [];
+        store.state = action.payload;
+        stream.source(1, store.state);
+        break;
 
-  const canUndo$ = pipe(
-    state$,
-    map(state => state.history.length > 0)
-  );
+      case StateActionTypes.UNDO:
+        if (store.history.length > 0) {
+          store.future.push(store.state);
+          store.state = store.history.pop();
+          stream.source(1, store.state);
+        }
+        break;
 
-  const canRedo$ = pipe(
-    state$,
-    map(state => state.future.length > 0)
-  );
+      case StateActionTypes.REDO:
+        if (store.future.length > 0) {
+          store.history.push(store.state);
+          store.state = store.future.pop();
+          stream.source(1, store.state);
+        }
+        break;
 
-  return {
-    // Streams
-    state$,
-    current$,
-    canUndo$,
-    canRedo$,
-    
-    // Actions
-    dispatch: (action) => subject(1)(action),
-    
-    // Helper methods
-    updateState: (updates) => 
-      subject(1)(createStateAction(StateActionTypes.UPDATE_STATE, updates)),
-    resetState: () => 
-      subject(1)(createStateAction(StateActionTypes.RESET_STATE)),
-    undo: () => 
-      subject(1)(createStateAction(StateActionTypes.UNDO)),
-    redo: () => 
-      subject(1)(createStateAction(StateActionTypes.REDO))
+      default:
+        break;
+    }
   };
-};
+
+  return stream;
+}

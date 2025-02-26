@@ -4,92 +4,72 @@ describe('BaseComponent', () => {
   let component;
 
   beforeEach(() => {
-    component = new BaseComponent({ testProp: 'test' });
+    component = new BaseComponent();
   });
 
-  afterEach(() => {
-    component.dispose();
+  it('initializes with default state', () => {
+    let value;
+    component.subject.source(0, (type, data) => {
+      if (type === 1) {
+        value = data;
+      }
+    });
+
+    expect(value).toEqual({});
   });
 
-  test('initializes with props', () => {
-    expect(component.props).toEqual({ testProp: 'test' });
-    expect(component.state).toEqual({});
-  });
-
-  test('lifecycle methods are called in correct order', () => {
-    const initializeSpy = jest.spyOn(component, 'onInitialize');
-    const mountSpy = jest.spyOn(component, 'onMount');
-    const unmountSpy = jest.spyOn(component, 'onUnmount');
-
-    component.mount();
-    expect(initializeSpy).toHaveBeenCalled();
-    expect(mountSpy).toHaveBeenCalled();
-
-    component.unmount();
-    expect(unmountSpy).toHaveBeenCalled();
-  });
-
-  test('setState updates state and emits changes', (done) => {
-    const stream = component.createStream();
-    stream(0, (data) => {
-      expect(data.nextState).toEqual({ test: 'value' });
-      done();
+  it('setState updates state and emits changes', () => {
+    let value;
+    component.subject.source(0, (type, data) => {
+      if (type === 1) {
+        value = data;
+      }
     });
 
     component.setState({ test: 'value' });
+    expect(value).toEqual({ test: 'value' });
   });
 
-  test('update method handles prop changes', () => {
-    const updateSpy = jest.spyOn(component, 'onUpdate');
-    const nextProps = { testProp: 'updated' };
-
-    component.update(nextProps);
-    expect(updateSpy).toHaveBeenCalledWith({ testProp: 'test' }, nextProps);
-    expect(component.props).toEqual(nextProps);
-  });
-
-  test('emit method calls onEvent prop when available', () => {
-    const onEvent = jest.fn();
-    component = new BaseComponent({ onEvent });
-
-    component.emit('test', { data: 'test' });
-    expect(onEvent).toHaveBeenCalledWith('test', { data: 'test' });
-  });
-
-  test('lifecycle streams emit correct values', (done) => {
-    const { mount$, unmount$, update$ } = component.lifecycle;
-
-    let mountCalled = false;
-    let unmountCalled = false;
-    let updateCalled = false;
-
-    mount$(0, (value) => {
-      expect(value).toBe(true);
-      mountCalled = true;
-      checkDone();
+  it('update method handles prop changes', () => {
+    let value;
+    component.lifecycle.update$.source(0, (type, data) => {
+      if (type === 1) {
+        value = data;
+      }
     });
 
-    unmount$(0, (value) => {
-      expect(value).toBe(true);
-      unmountCalled = true;
-      checkDone();
+    component.update({ test: 'value' });
+    expect(value).toEqual({ test: 'value' });
+  });
+
+  it('lifecycle streams emit correct values', () => {
+    let mountValue, unmountValue, updateValue;
+
+    component.lifecycle.mount$.source(0, (type, data) => {
+      if (type === 1) {
+        mountValue = true;
+      }
     });
 
-    update$(0, (value) => {
-      expect(value).toHaveProperty('prevProps');
-      expect(value).toHaveProperty('nextProps');
-      updateCalled = true;
-      checkDone();
+    component.lifecycle.unmount$.source(0, (type, data) => {
+      if (type === 1) {
+        unmountValue = true;
+      }
+    });
+
+    component.lifecycle.update$.source(0, (type, data) => {
+      if (type === 1) {
+        updateValue = data;
+      }
     });
 
     component.mount();
-    component.update({ newProp: 'test' });
-    component.unmount();
+    expect(mountValue).toBe(true);
 
-    function checkDone() {
-      if (mountCalled && unmountCalled && updateCalled) {
-        done();
-      }
-    }
+    component.update({ test: 'value' });
+    expect(updateValue).toEqual({ test: 'value' });
+
+    component.unmount();
+    expect(unmountValue).toBe(true);
   });
 });

@@ -1,60 +1,71 @@
-import { fromStream, toStream, streamMap, streamFilter, streamMerge, createStream } from '../index';
-import xs from 'xstream';
+import { createSource, map, filter, combine, fromArray } from '../core';
 
 describe('Stream Management', () => {
   describe('Stream Lifecycle', () => {
-    it('should properly initialize a stream', () => {
-      const stream = createStream(42);
-      let value;
-      stream.source(0, (t, d) => {
-        if (t === 1) value = d;
+    it('should properly initialize a stream', (done) => {
+      const stream = createSource(({ next, complete }) => {
+        next(42);
+        complete();
+        return () => {};
       });
-      expect(value).toBe(42);
+
+      stream.source(0, (type, data) => {
+        if (type === 1) expect(data).toBe(42);
+        if (type === 2) done();
+      });
     });
 
-    it('should update stream value', () => {
-      const stream = createStream(1);
-      let value;
-      stream.source(0, (t, d) => {
-        if (t === 1) value = d;
+    it('should update stream value', (done) => {
+      const stream = createSource(({ next }) => {
+        next(1);
+        return () => {};
       });
-      expect(value).toBe(1);
+
+      stream.source(0, (type, data) => {
+        if (type === 1) {
+          expect(data).toBe(1);
+          done();
+        }
+      });
     });
   });
 
   describe('Stream Operators', () => {
-    it('should correctly map values', () => {
-      const source = createStream(2);
-      const doubled = streamMap(x => x * 2)(source);
-      let value;
-      doubled.source(0, (t, d) => {
-        if (t === 1) value = d;
-      });
-      expect(value).toBe(4);
-    });
+    it('should correctly map values', (done) => {
+      const source = fromArray([2]);
+      const doubled = map(x => x * 2)(source);
 
-    it('should properly filter values', () => {
-      const source = createStream(3);
-      const filtered = streamFilter(x => x > 2)(source);
-      let value;
-      filtered.source(0, (t, d) => {
-        if (t === 1) value = d;
-      });
-      expect(value).toBe(3);
-    });
-  });
-
-  describe('Stream Conversion', () => {
-    it('should convert between xstream and callbag', (done) => {
-      const xs$ = xs.of(1, 2, 3);
-      const callbag = fromStream(xs$);
-      const back$ = toStream(callbag);
-      
-      back$.addListener({
-        next: value => {
-          expect(value).toBe(1);
-          done();
+      doubled.source(0, (type, data) => {
+        if (type === 1) {
+          expect(data).toBe(4);
         }
+        if (type === 2) done();
+      });
+    });
+
+    it('should properly filter values', (done) => {
+      const source = fromArray([1, 2, 3]);
+      const filtered = filter(x => x > 2)(source);
+
+      filtered.source(0, (type, data) => {
+        if (type === 1) {
+          expect(data).toBe(3);
+        }
+        if (type === 2) done();
+      });
+    });
+
+    it('should combine multiple streams', (done) => {
+      const source1 = fromArray([1]);
+      const source2 = fromArray(['a']);
+      const combined = combine(source1, source2);
+
+      combined.source(0, (type, data) => {
+        if (type === 1) {
+          expect(data[0]).toBe(1);
+          expect(data[1]).toBe('a');
+        }
+        if (type === 2) done();
       });
     });
   });
