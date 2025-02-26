@@ -13,6 +13,25 @@ export interface PropUsage {
   }[];
 }
 
+interface PropInfo {
+  name: string;
+  type: string;
+  required: boolean;
+  usageCount: number;
+  defaultValue?: any;
+  valueChanges?: number;
+  lastValue?: {
+    timestamp: number;
+    value: any;
+    renderCount: number;
+  };
+  valueHistory?: {
+    timestamp: number;
+    value: any;
+    renderCount: number;
+  }[];
+}
+
 export interface PropAnalysisResult {
   components: PropUsage[];
   unusedProps: {
@@ -34,12 +53,33 @@ export interface PropAnalysisResult {
 export class PropAnalyzer {
   private componentCache: Map<string, PropUsage> = new Map();
   private renderCount: Map<string, number> = new Map();
+  private memoizedAnalysis: PropAnalysisResult | null = null;
+  private lastAnalysisTimestamp: number = 0;
+  private lastUpdateTimestamp: number = 0;
+  private batchedUpdates: Map<string, Set<string>> = new Map();
+  private readonly CACHE_THRESHOLD = 1000; // 1 second
+  private readonly BATCH_THRESHOLD = 16; // ~1 frame at 60fps
 
   trackPropUsage(
     Component: ComponentType<any>,
     props: Record<string, any>,
     componentName: string
   ): void {
+    this.lastUpdateTimestamp = Date.now();
+    
+    // Add to batch
+    if (!this.batchedUpdates.has(componentName)) {
+      this.batchedUpdates.set(componentName, new Set());
+    }
+    Object.keys(props).forEach(propName => 
+      this.batchedUpdates.get(componentName)!.add(propName)
+    );
+
+    // Process batch if threshold exceeded
+    if (this.shouldProcessBatch()) {
+      this.processBatchedUpdates();
+    }
+
     let usage = this.componentCache.get(componentName);
     
     if (!usage) {
@@ -63,9 +103,9 @@ export class PropAnalyzer {
       if (existingProp) {
         existingProp.usageCount++;
         // Track value changes
-        if (value !== existingProp.lastValue) {
+        if (!this.areValuesEqual(value, existingProp.lastValue)) {
           existingProp.valueChanges = (existingProp.valueChanges || 0) + 1;
-          existingProp.lastValue = value;
+          existingProp.lastValue = this.cloneValue(value);
         }
       } else {
         usage!.props.push({
@@ -75,10 +115,44 @@ export class PropAnalyzer {
           usageCount: 1,
           defaultValue: this.getDefaultValue(Component, name),
           valueChanges: 0,
-          lastValue: value
+          lastValue: this.cloneValue(value)
         });
       }
     });
+
+    // Invalidate memoized analysis
+    this.memoizedAnalysis = null;
+  }
+
+  private shouldProcessBatch(): boolean {
+    return Date.now() - this.lastUpdateTimestamp >= this.BATCH_THRESHOLD;
+  }
+
+  private processBatchedUpdates(): void {
+    this.batchedUpdates.clear();
+  }
+
+  private areValuesEqual(value1: any, value2: any): boolean {
+    if (value1 === value2) return true;
+    if (typeof value1 !== typeof value2) return false;
+    if (typeof value1 !== 'object') return false;
+    if (value1 === null || value2 === null) return false;
+
+    if (Array.isArray(value1) && Array.isArray(value2)) {
+      return value1.length === value2.length &&
+        value1.every((v, i) => this.areValuesEqual(v, value2[i]));
+    }
+
+    const keys1 = Object.keys(value1);
+    const keys2 = Object.keys(value2);
+    return keys1.length === keys2.length &&
+      keys1.every(key => this.areValuesEqual(value1[key], value2[key]));
+  }
+
+  private cloneValue(value: any): any {
+    if (typeof value !== 'object' || value === null) return value;
+    if (Array.isArray(value)) return [...value];
+    return { ...value };
   }
 
   private getPropType(value: any): string {
@@ -96,6 +170,17 @@ export class PropAnalyzer {
   }
 
   analyzeProps(): PropAnalysisResult {
+    const currentTime = Date.now();
+    
+    // Return memoized result if within threshold
+    if (
+      this.memoizedAnalysis &&
+      currentTime - this.lastAnalysisTimestamp < this.CACHE_THRESHOLD &&
+      currentTime - this.lastUpdateTimestamp > this.BATCH_THRESHOLD
+    ) {
+      return this.memoizedAnalysis;
+    }
+
     const components = Array.from(this.componentCache.values());
     const unusedProps: { componentName: string; propName: string }[] = [];
     const propPatterns: Map<string, { count: number; components: Set<string> }> = new Map();
@@ -132,7 +217,7 @@ export class PropAnalyzer {
       });
     });
 
-    return {
+    this.memoizedAnalysis = {
       components,
       unusedProps,
       propPatterns: Array.from(propPatterns.entries()).map(([pattern, data]) => ({
@@ -142,6 +227,9 @@ export class PropAnalyzer {
       })),
       frequentUpdates: frequentUpdates.sort((a, b) => b.updateCount - a.updateCount)
     };
+
+    this.lastAnalysisTimestamp = currentTime;
+    return this.memoizedAnalysis;
   }
 
   getComponentPropUsage(componentName: string): PropUsage | undefined {
@@ -155,6 +243,10 @@ export class PropAnalyzer {
   reset(): void {
     this.componentCache.clear();
     this.renderCount.clear();
+    this.memoizedAnalysis = null;
+    this.lastAnalysisTimestamp = 0;
+    this.lastUpdateTimestamp = 0;
+    this.batchedUpdates.clear();
   }
 }
 

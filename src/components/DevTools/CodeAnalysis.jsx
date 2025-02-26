@@ -8,6 +8,7 @@ const CodeAnalysis = () => {
   const componentTreeRef = useRef(null);
   const performanceChartRef = useRef(null);
   const propUsageChartRef = useRef(null);
+  const frequentUpdatesChartRef = useRef(null);
   const [propAnalysis, setPropAnalysis] = useState(null);
 
   useEffect(() => {
@@ -63,6 +64,13 @@ const CodeAnalysis = () => {
       renders: propAnalyzer.getRenderCount(component.componentName)
     }));
 
+    // Create frequent updates data
+    const frequentUpdatesData = analysis.frequentUpdates.map(update => ({
+      name: `${update.componentName}.${update.propName}`,
+      updates: update.updateCount,
+      frequency: (update.updateCount / propAnalyzer.getRenderCount(update.componentName)) * 100
+    }));
+
     // Create dependency graph
     new RosenCharts.Network(dependencyChartRef.current, {
       data: dependencyData,
@@ -113,6 +121,31 @@ const CodeAnalysis = () => {
         position: 'top'
       }
     });
+
+    // Create frequent updates chart
+    new RosenCharts.Bar(frequentUpdatesChartRef.current, {
+      data: frequentUpdatesData,
+      theme: 'dark',
+      xField: 'name',
+      yField: ['updates', 'frequency'],
+      barStyle: {
+        fill: ['#ff4081', '#7c4dff']
+      },
+      legend: {
+        visible: true,
+        position: 'top'
+      },
+      yAxis: {
+        frequency: {
+          title: 'Change Frequency (%)',
+          min: 0,
+          max: 100
+        },
+        updates: {
+          title: 'Update Count'
+        }
+      }
+    });
   }, []);
 
   return (
@@ -149,6 +182,41 @@ const CodeAnalysis = () => {
             </ul>
           </div>
         )}
+      </div>
+
+      <div className={styles['chart-section']}>
+        <h3>Frequent Prop Updates</h3>
+        <div ref={frequentUpdatesChartRef} className={styles['chart-container']} />
+        {propAnalysis && propAnalysis.frequentUpdates.length > 0 && (
+          <div className={styles['analysis-warning']}>
+            <h4>Potential Performance Issues</h4>
+            <ul>
+              {propAnalysis.frequentUpdates.map(({componentName, propName, updateCount}) => (
+                <li key={`${componentName}-${propName}`}>
+                  {componentName}: Prop "{propName}" changed {updateCount} times 
+                  ({((updateCount / propAnalyzer.getRenderCount(componentName)) * 100).toFixed(1)}% of renders)
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className={styles['chart-section']}>
+        <h3>Prop Patterns</h3>
+        <div className={styles['pattern-grid']}>
+          {propAnalysis && propAnalysis.propPatterns.map(pattern => (
+            <div key={pattern.pattern} className={styles['pattern-card']}>
+              <h4>{pattern.pattern}</h4>
+              <p>Used in {pattern.count} instances across {pattern.components.length} components</p>
+              <ul>
+                {pattern.components.map(component => (
+                  <li key={component}>{component}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
