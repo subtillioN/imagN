@@ -230,3 +230,34 @@ html, body, #root {
   min-height: 100vh;
   width: 100%;
 }
+
+.analysis-warning {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: rgba(183, 28, 28, 0.1);
+  border-left: 4px solid #b71c1c;
+  border-radius: 4px;
+}
+
+.analysis-warning h4 {
+  color: #ef5350;
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.analysis-warning ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: none;
+}
+
+.analysis-warning li {
+  color: #ef9a9a;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 0.25rem;
+}
+
+.analysis-warning li:last-child {
+  margin-bottom: 0;
+}
