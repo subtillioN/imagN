@@ -6,7 +6,7 @@ import {
   RealTimeMonitoring,
   PerformanceImpact,
   OptimizationRecommendations
-} from '../../src';
+} from '../components';
 
 const mockData = {
   components: [

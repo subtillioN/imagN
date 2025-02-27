@@ -1,59 +1,17 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { MainView } from './components/MainView';
-import { AppThemeProvider } from './components/ThemeProvider';
+import { createRoot } from 'react-dom/client';
+import App from './App';
 
-// Create initial sources for the MainView
-const createStream = () => {
-  return {
-    subscribe: (callback: any) => {
-      return () => {};
-    }
-  };
-};
+const container = document.getElementById('root');
+if (!container) {
+    throw new Error('Failed to find root element');
+}
 
-// Remove the forced dark theme styles that were added previously
-const existingStyles = document.head.querySelectorAll('style');
-existingStyles.forEach(style => {
-  if (style.textContent?.includes('forceDarkTheme')) {
-    document.head.removeChild(style);
-  }
-});
-
-// Add code to check for old buttons and remove them
-window.addEventListener('DOMContentLoaded', () => {
-  // Try to find any buttons matching the XPath /html/body/div/div/button
-  const oldButtons = document.querySelectorAll('body > div > div > button');
-  console.log('Found potential old dev tools buttons:', oldButtons);
-  
-  // Remove any found buttons that aren't part of our React app
-  oldButtons.forEach(button => {
-    if (!button.closest('#root')) {
-      console.log('Removing old button:', button);
-      button.remove();
-    }
-  });
-});
-
-// Initialize sources
-const sources = {
-  state: {
-    imageConfig$: createStream(),
-    progress$: createStream(),
-    results$: createStream()
-  }
-};
-
-// Initialize React app
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-
-// Render the application with the theme provider
+const root = createRoot(container);
 root.render(
-  <React.StrictMode>
-    <AppThemeProvider>
-      <MainView sources={sources} />
-    </AppThemeProvider>
-  </React.StrictMode>
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>
 );
 
 // For Hot Module Replacement

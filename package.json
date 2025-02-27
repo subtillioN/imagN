@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "NODE_ENV=development vite",
+    "build": "NODE_ENV=production tsc && vite build",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
