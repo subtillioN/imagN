@@ -44,6 +44,7 @@
     "callbag-to-obs": "^1.0.0",
     "d3": "^7.9.0",
     "fs-extra": "^11.2.0",
+    "fraop-mvi-dev-tools": "file:FRAOP-MVI-Dev-Tools",
     "recharts": "^2.15.1",
     "rxjs": "^7.8.2",
     "xstream": "^11.14.0"
