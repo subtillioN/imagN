@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createSource } from '../streams/core';
-import { Option, Some, None } from '../utils/option';
+import { Option, Some, None, isSome } from '../utils/option';
+import {
+  BaseComponentState,
+  StreamSource,
+  StreamDispose,
+  LifecycleEvents as ImportedLifecycleEvents
+} from '../types/functional';
 
 // Types
 export type Observer<T> = (data: T) => void;
@@ -13,7 +19,7 @@ export type Source<T> = {
 export type LifecycleEvents = {
   mount$: Source<boolean>;
   unmount$: Source<boolean>;
-  update$: Source<unknown>;
+  update$: Source<boolean>;
 };
 
 export type BaseComponentState<S = unknown, P = unknown> = {
@@ -21,92 +27,116 @@ export type BaseComponentState<S = unknown, P = unknown> = {
   props: P;
   subject: Source<S>;
   lifecycle: LifecycleEvents;
+  updateState: (newState: Partial<S>) => void;
+  updateProps: (newProps: Partial<P>) => void;
+  subscribe: (observer: Observer<S>) => StreamDispose;
+  subscribeToLifecycle: (event: keyof LifecycleEvents, observer: Observer<unknown>) => StreamDispose;
+  emit: (event: string, data: unknown) => void;
 };
 
-// Utility functions
-const createLifecycleEvents = (): LifecycleEvents => ({
-  mount$: createSource<boolean>(() => () => undefined),
-  unmount$: createSource<boolean>(() => () => undefined),
-  update$: createSource<unknown>(() => () => undefined)
-});
-
-// Hook implementation
-export const useBaseComponent = <S, P>(initialState: S): BaseComponentState<S, P> => {
-  // State management
-  const [state, setState] = useState<S>(initialState);
-  const [props, setProps] = useState<P>({} as P);
-  
-  // Refs for memoization
-  const subjectRef = useRef<Option<Source<S>>>(None);
+// Lifecycle hook
+const useLifecycle = () => {
   const lifecycleRef = useRef<Option<LifecycleEvents>>(None);
 
-  // Initialize subject if not exists
-  if (subjectRef.current === None) {
+  if (!isSome(lifecycleRef.current)) {
+    lifecycleRef.current = Some({
+      mount$: createSource<boolean>(() => () => undefined),
+      unmount$: createSource<boolean>(() => () => undefined),
+      update$: createSource<boolean>(() => () => undefined)
+    });
+  }
+
+  useEffect(() => {
+    if (isSome(lifecycleRef.current)) {
+      const lifecycle = lifecycleRef.current.value;
+      lifecycle.mount$.source(1, true);
+      return () => {
+        lifecycle.unmount$.source(1, true);
+      };
+    }
+  }, []);
+
+  return lifecycleRef;
+};
+
+// Stream hook
+const useStream = <S>(initialState: S) => {
+  const subjectRef = useRef<Option<StreamSource<S>>>(None);
+
+  if (!isSome(subjectRef.current)) {
     subjectRef.current = Some(createSource<S>((sink) => {
-      sink.next(state);
+      sink(initialState);
       return () => undefined;
     }));
   }
 
-  // Initialize lifecycle events if not exists
-  if (lifecycleRef.current === None) {
-    lifecycleRef.current = Some(createLifecycleEvents());
-  }
+  return subjectRef;
+};
 
-  // Mount effect
-  useEffect(() => {
-    const lifecycle = lifecycleRef.current;
-    if (lifecycle !== None) {
-      lifecycle.value.mount$.source(1, true);
-      return () => {
-        lifecycle.value.unmount$.source(1, true);
-      };
-    }
-    return undefined;
-  }, []);
+// State hook
+const useComponentState = <S>(initialState: S) => {
+  const [state, setState] = useState<S>(initialState);
+  const streamRef = useStream(initialState);
 
-  // Update state immutably
   const updateState = (newState: Partial<S>): void => {
-    setState((prev) => ({ ...prev, ...newState }));
-    if (subjectRef.current !== None) {
-      subjectRef.current.value.source(1, { ...state, ...newState });
-    }
+    setState((prev) => {
+      const updated = { ...prev, ...newState };
+      if (isSome(streamRef.current)) {
+        streamRef.current.value.source(1, updated);
+      }
+      return updated;
+    });
   };
 
-  // Update props immutably
+  return { state, updateState, streamRef };
+};
+
+// Props hook
+const useComponentProps = <P>(lifecycleRef: React.RefObject<Option<LifecycleEvents>>) => {
+  const [props, setProps] = useState<P>({} as P);
+
   const updateProps = (newProps: Partial<P>): void => {
-    setProps((prev) => ({ ...prev, ...newProps }));
-    if (lifecycleRef.current !== None) {
-      lifecycleRef.current.value.update$.source(1, newProps);
-    }
+    setProps((prev) => {
+      const updated = { ...prev, ...newProps };
+      if (isSome(lifecycleRef.current)) {
+        lifecycleRef.current.value.update$.source(1, true);
+      }
+      return updated;
+    });
   };
 
-  // Subscribe to state changes
-  const subscribe = (observer: Observer<S>): Unsubscribe => {
-    if (subjectRef.current === None) return () => undefined;
-    return subjectRef.current.value.source(0, (type, data) => {
+  return { props, updateProps };
+};
+
+// Main hook
+export const useBaseComponent = <S, P>(initialState: S): BaseComponentState<S, P> => {
+  const lifecycleRef = useLifecycle();
+  const { state, updateState, streamRef } = useComponentState(initialState);
+  const { props, updateProps } = useComponentProps<P>(lifecycleRef);
+
+  const subscribe = (observer: Observer<S>): StreamDispose => {
+    if (!isSome(streamRef.current)) return () => undefined;
+    return streamRef.current.value.source(0, (type: number, data: S) => {
       if (type === 1) observer(data);
     });
   };
 
-  // Subscribe to lifecycle events
   const subscribeToLifecycle = (
     event: keyof LifecycleEvents,
     observer: Observer<unknown>
-  ): Unsubscribe => {
-    if (lifecycleRef.current === None) return () => undefined;
+  ): StreamDispose => {
+    if (!isSome(lifecycleRef.current)) return () => undefined;
     const lifecycle = lifecycleRef.current.value[event];
     if (!lifecycle) {
       throw new Error(`Invalid lifecycle event: ${event}`);
     }
-    return lifecycle.source(0, (type, data) => {
+    return lifecycle.source(0, (type: number, data: unknown) => {
       if (type === 1) observer(data);
     });
   };
 
-  // Emit events
   const emit = (event: string, data: unknown): void => {
-    const currentProps = props as any;
+    const currentProps = props as { onEvent?: (event: string, data: unknown) => void };
     if (currentProps.onEvent) {
       currentProps.onEvent(event, data);
     }
@@ -115,8 +145,12 @@ export const useBaseComponent = <S, P>(initialState: S): BaseComponentState<S, P
   return {
     state,
     props,
-    subject: subjectRef.current === None ? createSource(() => () => undefined) : subjectRef.current.value,
-    lifecycle: lifecycleRef.current === None ? createLifecycleEvents() : lifecycleRef.current.value,
+    subject: isSome(streamRef.current) ? streamRef.current.value : createSource(() => () => undefined),
+    lifecycle: isSome(lifecycleRef.current) ? lifecycleRef.current.value : {
+      mount$: createSource(() => () => undefined),
+      unmount$: createSource(() => () => undefined),
+      update$: createSource(() => () => undefined)
+    },
     updateState,
     updateProps,
     subscribe,
