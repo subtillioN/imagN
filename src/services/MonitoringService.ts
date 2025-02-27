@@ -1,10 +1,10 @@
-import { EventEmitter } from 'events';
-import { PerformanceMetrics, PerformanceBudget } from '../utils/performanceBenchmark';
-import { PropAnalysisResult } from '../utils/propAnalysis';
+import { PropAnalysisResult } from '../core/PropAnalyzer';
+
+export type MonitoringEventType = 'metrics' | 'alert' | 'violation';
 
 export interface MonitoringEvent {
+  type: MonitoringEventType;
   timestamp: number;
-  type: 'metrics' | 'violation' | 'alert';
   data: any;
 }
 
@@ -18,11 +18,14 @@ export interface MonitoringConfig {
   };
 }
 
-export class MonitoringService extends EventEmitter {
+type EventCallback = (event: MonitoringEvent) => void;
+
+export class MonitoringService {
   private static instance: MonitoringService;
-  private isRunning: boolean = false;
+  private listeners: EventCallback[] = [];
+  private isMonitoring: boolean = false;
   private metrics: MonitoringEvent[] = [];
-  private monitoringInterval: NodeJS.Timer | null = null;
+  private monitoringInterval: number | null = null;
   private lastAnalysisResult: PropAnalysisResult | null = null;
 
   private readonly defaultConfig: MonitoringConfig = {
@@ -35,48 +38,50 @@ export class MonitoringService extends EventEmitter {
     },
   };
 
-  private constructor(private config: MonitoringConfig) {
-    super();
-    this.config = { ...this.defaultConfig, ...config };
-  }
+  private constructor() {}
 
-  static getInstance(config: Partial<MonitoringConfig> = {}): MonitoringService {
+  public static getInstance(): MonitoringService {
     if (!MonitoringService.instance) {
-      MonitoringService.instance = new MonitoringService({
-        ...MonitoringService.instance?.defaultConfig,
-        ...config,
-      });
+      MonitoringService.instance = new MonitoringService();
     }
     return MonitoringService.instance;
   }
 
-  start() {
-    if (this.isRunning) return;
-
-    this.isRunning = true;
-    this.monitoringInterval = setInterval(() => {
-      this.collectMetrics();
-      this.cleanupOldMetrics();
-    }, this.config.sampleInterval);
-
-    this.emit('monitoring:started', {
-      timestamp: Date.now(),
-      config: this.config,
-    });
+  public subscribe(callback: EventCallback): () => void {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(cb => cb !== callback);
+    };
   }
 
-  stop() {
-    if (!this.isRunning) return;
+  public startMonitoring(): void {
+    if (this.isMonitoring) return;
+    this.isMonitoring = true;
 
-    if (this.monitoringInterval) {
-      clearInterval(this.monitoringInterval);
+    // Simulate monitoring events
+    this.monitoringInterval = window.setInterval(() => {
+      this.notifyListeners({
+        type: 'metrics',
+        timestamp: Date.now(),
+        data: {
+          components: [],
+          unusedProps: [],
+          propPatterns: [],
+          frequentUpdates: []
+        } as PropAnalysisResult
+      });
+    }, 1000);
+  }
+
+  public stopMonitoring(): void {
+    if (!this.isMonitoring) return;
+    
+    if (this.monitoringInterval !== null) {
+      window.clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
     }
-
-    this.isRunning = false;
-    this.emit('monitoring:stopped', {
-      timestamp: Date.now(),
-    });
+    
+    this.isMonitoring = false;
   }
 
   updateAnalysis(analysis: PropAnalysisResult) {
@@ -121,11 +126,11 @@ export class MonitoringService extends EventEmitter {
     };
 
     this.metrics.push(event);
-    this.emit('metrics:collected', event);
+    this.notifyListeners(event);
   }
 
   private checkViolations(metrics: PerformanceMetrics) {
-    const { alertThresholds } = this.config;
+    const { alertThresholds } = this.defaultConfig;
     const violations: string[] = [];
 
     if (metrics.analysisTime > alertThresholds.analysisTime) {
@@ -159,12 +164,12 @@ export class MonitoringService extends EventEmitter {
         data: { metrics, violations },
       };
 
-      this.emit('monitoring:violation', event);
+      this.notifyListeners(event);
     }
   }
 
   private cleanupOldMetrics() {
-    const cutoff = Date.now() - this.config.retentionPeriod;
+    const cutoff = Date.now() - this.defaultConfig.retentionPeriod;
     this.metrics = this.metrics.filter(event => event.timestamp >= cutoff);
   }
 
@@ -182,11 +187,7 @@ export class MonitoringService extends EventEmitter {
     return this.metrics.slice(-count);
   }
 
-  on(event: 'metrics:collected', listener: (event: MonitoringEvent) => void): this;
-  on(event: 'monitoring:violation', listener: (event: MonitoringEvent) => void): this;
-  on(event: 'monitoring:started', listener: (data: any) => void): this;
-  on(event: 'monitoring:stopped', listener: (data: any) => void): this;
-  on(event: string, listener: (...args: any[]) => void): this {
-    return super.on(event, listener);
+  private notifyListeners(event: MonitoringEvent): void {
+    this.listeners.forEach(callback => callback(event));
   }
 } 

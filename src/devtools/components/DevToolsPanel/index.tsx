@@ -6,9 +6,13 @@ import {
   RealTimeMonitoring,
   PerformanceImpact,
   OptimizationRecommendations
-} from '../components';
-import { PropAnalysisResult, PropPattern, PropUsage } from '../core/PropAnalyzer';
-import styles from '../styles/base.module.css';
+} from '../../components';
+import { PropAnalysisResult, PropPattern, PropUsage } from '../../core/PropAnalyzer';
+import styles from '../../styles/base.module.css';
+
+interface DevToolsPanelProps {
+  isOpen: boolean;
+}
 
 const mockData: PropAnalysisResult = {
   components: [
@@ -40,14 +44,16 @@ const mockData: PropAnalysisResult = {
   ]
 };
 
-const Demo: React.FC = () => {
+const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ isOpen }) => {
   const [activeTab, setActiveTab] = useState('monitoring');
-  const [data, setData] = useState(mockData);
+  const [data, setData] = useState<PropAnalysisResult>(mockData);
 
   // Simulate real-time updates
   useEffect(() => {
+    if (!isOpen) return;
+
     const interval = setInterval(() => {
-      setData(prev => ({
+      setData((prev: PropAnalysisResult) => ({
         ...prev,
         components: prev.components.map(component => ({
           ...component,
@@ -61,7 +67,7 @@ const Demo: React.FC = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isOpen]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -82,9 +88,25 @@ const Demo: React.FC = () => {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className={styles.container}>
-      <h1>FRAOP MVI Dev Tools Demo</h1>
+    <div
+      className={styles.container}
+      style={{
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'white',
+        zIndex: 999,
+        overflow: 'auto',
+        padding: '20px',
+        boxSizing: 'border-box'
+      }}
+    >
+      <h1>FRAOP MVI Dev Tools</h1>
       
       <div style={{ marginBottom: '20px' }}>
         <button
@@ -132,4 +154,4 @@ const Demo: React.FC = () => {
   );
 };
 
-export default Demo; 
+export default DevToolsPanel; 

@@ -37,17 +37,16 @@
     "@mui/styled-engine": "^6.0.0",
     "@mui/system": "^5.15.9",
     "@types/d3": "^7.4.3",
-    "@types/react-dom": "^19.0.4",
     "callbag-basics": "^4.0.0",
     "callbag-from-obs": "^1.2.0",
     "callbag-start-with": "^3.1.0",
     "callbag-subscribe": "^1.5.1",
     "callbag-to-obs": "^1.0.0",
     "d3": "^7.9.0",
+    "fs-extra": "^11.2.0",
     "recharts": "^2.15.1",
     "rxjs": "^7.8.2",
-    "xstream": "^11.14.0",
-    "fs-extra": "^11.2.0"
+    "xstream": "^11.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",
@@ -65,6 +64,7 @@
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^18.19.76",
     "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
     "@vitejs/plugin-react": "^4.3.4",

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { PropAnalysisResult } from '../../core/PropAnalyzer';
+import { PropAnalysisResult, PropUsage } from '../../core/PropAnalyzer';
 import { MonitoringService, MonitoringEvent } from '../../services/MonitoringService';
+import styles from '../../styles/base.module.css';
 
 interface MonitoringDashboardProps {
   data: PropAnalysisResult;
@@ -21,7 +22,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ data }) => {
   useEffect(() => {
     const monitoringService = MonitoringService.getInstance();
     const unsubscribe = monitoringService.subscribe((event: MonitoringEvent) => {
-      if (event.type === 'update') {
+      if (event.type === 'metrics') {
         const analysis = event.data as PropAnalysisResult;
         const newMetrics = calculateMetrics(analysis);
         setMetricsHistory(prev => {
@@ -29,23 +30,37 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ data }) => {
           // Keep last 60 data points (1 minute at 1s interval)
           return newHistory.slice(-60);
         });
-      } else if (event.type === 'warning') {
+      } else if (event.type === 'alert') {
         setWarnings(prev => [...prev, event.data.message]);
       }
     });
 
-    return () => unsubscribe();
+    // Start monitoring when component mounts
+    monitoringService.startMonitoring();
+
+    return () => {
+      monitoringService.stopMonitoring();
+      unsubscribe();
+    };
   }, []);
+
+  const isActivelyUsed = (prop: PropUsage): boolean => {
+    return (prop.usageCount || 0) > 0;
+  };
+
+  const hasHighUpdateRate = (prop: PropUsage): boolean => {
+    const usageCount = prop.usageCount || 1;
+    const valueChanges = prop.valueChanges || 0;
+    return valueChanges / usageCount > 0.5;
+  };
 
   const calculateMetrics = (analysis: PropAnalysisResult): MetricsData => {
     const activeComponents = analysis.components.length;
-    const activeProps = analysis.components.reduce((sum, component) => 
-      sum + component.props.filter(p => p.usageCount > 0).length, 0
+    const activeProps = analysis.components.reduce((sum: number, component) => 
+      sum + component.props.filter(isActivelyUsed).length, 0
     );
-    const highUpdateProps = analysis.components.reduce((sum, component) => 
-      sum + component.props.filter(p => 
-        (p.valueChanges || 0) / (p.usageCount || 1) > 0.5
-      ).length, 0
+    const highUpdateProps = analysis.components.reduce((sum: number, component) => 
+      sum + component.props.filter(hasHighUpdateRate).length, 0
     );
 
     return {
@@ -57,10 +72,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ data }) => {
   };
 
   return (
-    <div className="container" data-testid="monitoring-dashboard">
+    <div className={styles.container} data-testid="monitoring-dashboard">
       <h2>Real-time Monitoring</h2>
 
-      <div className="chart-container">
+      <div className={styles.chartContainer}>
         <LineChart width={800} height={400} data={metricsHistory}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
@@ -92,24 +107,24 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ data }) => {
         </LineChart>
       </div>
 
-      <div className="section">
+      <div className={styles.section}>
         <h3>Current Metrics</h3>
-        <div className="data-grid">
-          <div className="data-item">
-            <div className="data-label">Components Tracked</div>
-            <div className="data-value" data-testid="component-count">
+        <div className={styles.dataGrid}>
+          <div className={styles.dataItem}>
+            <div className={styles.dataLabel}>Components Tracked</div>
+            <div className={styles.dataValue} data-testid="component-count">
               {data.components.length}
             </div>
           </div>
-          <div className="data-item">
-            <div className="data-label">Props Monitored</div>
-            <div className="data-value" data-testid="props-count">
+          <div className={styles.dataItem}>
+            <div className={styles.dataLabel}>Props Monitored</div>
+            <div className={styles.dataValue} data-testid="props-count">
               {data.components.reduce((sum, c) => sum + c.props.length, 0)}
             </div>
           </div>
-          <div className="data-item">
-            <div className="data-label">Frequent Updates</div>
-            <div className="data-value" data-testid="updates-count">
+          <div className={styles.dataItem}>
+            <div className={styles.dataLabel}>Frequent Updates</div>
+            <div className={styles.dataValue} data-testid="updates-count">
               {data.frequentUpdates.length}
             </div>
           </div>
@@ -117,11 +132,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({ data }) => {
       </div>
 
       {warnings.length > 0 && (
-        <div className="section">
+        <div className={styles.section}>
           <h3>Warnings</h3>
           <ul data-testid="warnings-list">
             {warnings.map((warning, index) => (
-              <li key={index} className="performance-low">
+              <li key={index} className={styles.performanceLow}>
                 {warning}
               </li>
             ))}

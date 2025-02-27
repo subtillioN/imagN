@@ -45,9 +45,99 @@
 
 /* Base Styles */
 .container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-md);
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.section {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.chartContainer {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.dataGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.dataItem {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.dataLabel {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.dataValue {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.performanceHigh {
+  color: #ef5350;
+  font-weight: bold;
+}
+
+.performanceMedium {
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.performanceLow {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.tooltip {
+  background-color: #fff;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button {
+  padding: 8px 16px;
+  margin: 0 8px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.button:active {
+  background-color: #004085;
+}
+
+.buttonActive {
+  background-color: #0056b3;
+  font-weight: bold;
 }
 
 /* Layout Components */

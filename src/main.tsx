@@ -15,8 +15,6 @@ root.render(
 );
 
 // For Hot Module Replacement
-// @ts-ignore: Unreachable code error
-if (import.meta && import.meta.hot) {
-  // @ts-ignore: Unreachable code error
-  import.meta.hot.accept();
+if (import.meta.hot) {
+    import.meta.hot.accept();
 } 
