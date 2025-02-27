@@ -3,7 +3,17 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      jsxRuntime: 'automatic',
+      jsxImportSource: 'react',
+      babel: {
+        plugins: [
+          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+        ]
+      }
+    })
+  ],
   server: {
     port: 3000,
     open: true
@@ -14,14 +24,15 @@ export default defineConfig({
     }
   },
   esbuild: {
-    loader: 'jsx',
-    include: /src\/.*\.jsx?$/,
+    loader: 'tsx',
+    include: /src\/.*\.[tj]sx?$/,
     exclude: []
   },
   optimizeDeps: {
     esbuildOptions: {
       loader: {
-        '.js': 'jsx'
+        '.js': 'jsx',
+        '.ts': 'tsx'
       }
     }
   },

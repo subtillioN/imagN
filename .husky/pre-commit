@@ -1,8 +1,44 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Run TypeScript type checking
-npm run type-check
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo "${BLUE}🔄 Running TTSD pre-commit cycle...${NC}"
+
+# Run TTSD pre-commit checks
+npm run ttsd:pre-commit || {
+  echo "${RED}✘ TTSD pre-commit checks failed${NC}"
+  exit 1
+}
+
+echo "${GREEN}✓ TTSD pre-commit checks passed${NC}"
+
+# Run bundle analysis in background
+npm run analyze-bundle &
+
+# Check for dev-tools files in wrong location
+INVALID_FILES=$(git diff --cached --name-only | grep -E "dev-tools|devtools" | grep -v "^FRAOP-MVI-Dev-Tools/")
+
+if [ ! -z "$INVALID_FILES" ]; then
+  echo "${RED}ERROR: Dev tools files found outside FRAOP-MVI-Dev-Tools module${NC}"
+  echo "The following files violate the architectural rules:"
+  echo "$INVALID_FILES"
+  echo "\nDev tools code MUST be in the FRAOP-MVI-Dev-Tools module."
+  echo "This is a strict separation of concerns rule."
+  exit 1
+fi
+
+# Run TypeScript validation
+npm run typecheck || exit 1
+
+# Run module boundary validation
+node scripts/validate-module-boundaries.js || exit 1
+
+echo "${GREEN}✓ Module boundary validation passed${NC}"
 
 # Run ESLint
 npm run lint
@@ -11,7 +47,4 @@ npm run lint
 npm run format
 
 # Run tests
-npm run test
-
-# Check bundle size
-npm run analyze-bundle 
+npm run test 

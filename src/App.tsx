@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { MainView } from './components/MainView';
 import { AppThemeProvider } from './components/ThemeProvider';
-import { DevToolsButton, DevToolsPanel } from 'fraop-mvi-dev-tools';
+import DevToolsButton from './components/DevToolsButton';
+import DevToolsPanel from './components/DevToolsPanel';
 
 // Create initial sources for the MainView
 const createStream = () => {
