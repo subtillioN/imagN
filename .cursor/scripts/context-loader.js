@@ -5,9 +5,14 @@
  * and setting up the environment for AI assistance focused on the context.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Constants
 const VECTOR_EMBEDDINGS_PATH = path.resolve(__dirname, '../../context/vector-embeddings.json');
