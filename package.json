@@ -34,6 +34,8 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.5",
     "@mui/material": "^6.4.5",
+    "@mui/styled-engine": "^6.0.0",
+    "@mui/system": "^5.15.9",
     "@types/d3": "^7.4.3",
     "@types/react-dom": "^19.0.4",
     "callbag-basics": "^4.0.0",
@@ -44,7 +46,8 @@
     "d3": "^7.9.0",
     "recharts": "^2.15.1",
     "rxjs": "^7.8.2",
-    "xstream": "^11.14.0"
+    "xstream": "^11.14.0",
+    "fs-extra": "^11.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",
@@ -67,6 +70,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "babel-jest": "^29.7.0",
     "callbag-subject": "^2.1.0",
+    "chalk": "^5.4.1",
     "eslint": "^8.33.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-functional": "^5.0.0",
@@ -114,5 +118,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "type": "module"
 }

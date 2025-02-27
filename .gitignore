@@ -1,4 +1,9 @@
 # Dependencies
+
+# git modules
+FRAOP-MVI-Dev-Tools/
+
+
 node_modules/
 .pnp
 .pnp.js
