@@ -1,0 +1,16 @@
+# Codebase Summary
+
+The imagN application is a web-based tool designed for managing and visualizing advanced AI-driven creative workflows. The codebase is organized into several directories, each responsible for different functionalities such as image generation, video processing, audio processing, and more.
+
+## Key Directories
+- **src/**: Contains the main source code for the application.
+- **tests/**: Contains unit and integration tests.
+- **docs/**: Contains documentation files.
+- **context/**: Contains context management files.
+
+## Key Files
+- **src/main.js**: Entry point of the application.
+- **src/config.js**: Configuration settings for the application.
+- **src/utils.js**: Utility functions used throughout the application.
+- **src/components/**: React components for the UI.
+- **src/services/**: Services for handling business logic and API calls.

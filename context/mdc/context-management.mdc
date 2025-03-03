@@ -1,0 +1,8 @@
+# Context Management
+
+The imagN application uses a context management system to manage application state and context.
+
+## Key Concepts
+- **Context Providers**: Provide context to components.
+- **Context Consumers**: Consume context in components.
+- **Context Updates**: Update context based on actions.

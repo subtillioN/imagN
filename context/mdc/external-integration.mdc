@@ -1,0 +1,8 @@
+# External Integration
+
+The imagN application integrates with external services for various functionalities.
+
+## Key Integrations
+- **API Integration**: Integrate with external APIs.
+- **Third-Party Services**: Use third-party services for specific features.
+- **Data Import/Export**: Import and export data from/to external sources.

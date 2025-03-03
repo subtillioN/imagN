@@ -1,0 +1,8 @@
+# Workflow Management
+
+The imagN application uses a workflow management system to manage creative workflows.
+
+## Key Features
+- **Workflow Definition**: Define workflows for different tasks.
+- **Workflow Execution**: Execute workflows based on defined steps.
+- **Workflow Monitoring**: Monitor progress of workflows.

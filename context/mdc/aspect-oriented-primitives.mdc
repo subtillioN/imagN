@@ -1,0 +1,8 @@
+# Aspect-Oriented Primitives
+
+The imagN application integrates aspect-oriented programming primitives to enhance modularity and maintainability without using object-oriented patterns.
+
+## Key Concepts
+- **Aspects**: Modular units of cross-cutting concerns.
+- **Join Points**: Points in the program where aspects can be applied.
+- **Advice**: Code that is executed at a join point.

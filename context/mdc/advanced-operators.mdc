@@ -1,0 +1,9 @@
+# Advanced Operators and Functionality
+
+The imagN application uses advanced operators and functionality to manage data streams and state.
+
+## Key Operators
+- **Map**: Transforms data streams.
+- **Filter**: Filters data streams based on conditions.
+- **Reduce**: Aggregates data streams.
+- **Merge**: Combines multiple data streams.

@@ -1,0 +1,8 @@
+# Test-Driven Development
+
+The imagN application is developed with a strong emphasis on testing, ensuring that each feature is thoroughly tested before deployment.
+
+## Key Practices
+- **Write Tests First**: Write tests before implementing features.
+- **Run Tests Frequently**: Run tests frequently during development.
+- **Automate Testing**: Use automated testing tools to run tests.

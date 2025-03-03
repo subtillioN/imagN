@@ -1,0 +1,8 @@
+# Functional Reactive Architecture
+
+The imagN application follows a Functional Reactive Architecture with Aspect-Oriented Primitives (FRAOP). This architecture ensures immutability, predictability, and modularity.
+
+## Key Principles
+- **Pure Functional Programming**: Ensures immutability and predictability.
+- **Aspect-Oriented Programming**: Enhances modularity and maintainability.
+- **Advanced Operators and Functionality**: Manages data streams and state effectively.

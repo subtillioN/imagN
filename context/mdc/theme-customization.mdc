@@ -1,0 +1,8 @@
+# Theme Customization
+
+The imagN application allows customization of themes to enhance user experience.
+
+## Key Features
+- **Theme Selection**: Select from predefined themes.
+- **Custom Themes**: Create and apply custom themes.
+- **Theme Persistence**: Persist theme settings across sessions.

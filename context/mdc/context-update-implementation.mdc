@@ -1,0 +1,8 @@
+# Context Update Implementation
+
+The imagN application implements context updates using a unidirectional dataflow paradigm.
+
+## Key Practices
+- **Action Dispatching**: Dispatch actions to update context.
+- **State Management**: Manage state using reducers.
+- **Context Propagation**: Propagate context updates to components.
