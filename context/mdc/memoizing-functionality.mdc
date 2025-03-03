@@ -1,0 +1,8 @@
+# Memoizing Functionality
+
+The imagN application provides memoizing functionality to optimize performance.
+
+## Key Features
+- **Memoization**: Cache results of expensive operations.
+- **Cache Management**: Manage cache for optimal performance.
+- **Cache Invalidation**: Invalidate cache when necessary.
